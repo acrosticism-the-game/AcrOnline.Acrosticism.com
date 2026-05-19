@@ -231,7 +231,7 @@ export default function AcrOnline() {
     const timerColor = timeLeft <= 30 ? "#ff4444" : timeLeft <= 60 ? "#ffaa00" : "#44cc44";
 
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "transparent", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
         <h2>Writing Phase</h2>
         <h3>Player: {currentPlayer}</h3>
 
@@ -301,7 +301,7 @@ export default function AcrOnline() {
                   fontWeight: "bold",
                   fontSize: "1.2rem",
                   color: "white",
-                  background: "transparent",
+                  textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
                   borderRadius: "6px",
                   marginRight: "10px",
                 }}
@@ -347,7 +347,7 @@ export default function AcrOnline() {
   const renderRevealPhase = () => {
     return (
       <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",, minHeight: "100vh" }}>
-        <h2>Submissions</h2>
+        <h2>Time to judge your submissions! Who acrosticized the hardest?!</h2>
 
         {effectiveTheme && (
           <div
@@ -393,7 +393,7 @@ export default function AcrOnline() {
                       fontWeight: "bold",
                       fontSize: "1.2rem",
                       color: "white",
-                      background: "transparent",
+                      textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"
                       borderRadius: "6px",
                       marginRight: "10px",
                     }}
@@ -454,12 +454,12 @@ export default function AcrOnline() {
   // Phase rendering
   if (phase === "setup") {
     return (
-<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", }}>        <h1 style={{
+<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"}}>        <h1 style={{
   textAlign: "center",
   color: "#fff2cc",
   fontFamily: "Nunito, sans-serif",
   fontWeight: 700,
-  background: "transparent",
+  textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
   padding: "12px",
   borderRadius: "8px",
   fontSize: "50px",
@@ -565,9 +565,9 @@ export default function AcrOnline() {
             marginTop: "20px",
             padding: "10px 20px",
             borderRadius: "8px",
-            background: canContinueFromSetup
-              ? "linear-gradient(90deg, #ff7ee5, #7afcff)"
-              : "#ccc",
+            textShadow: canContinueFromSetup
+              ? "0 0 20px #1155cc, 0 0 40px #1155cc"
+              : "none",
             fontWeight: "bold",
             cursor: canContinueFromSetup ? "pointer" : "not-allowed",
           }}
@@ -580,7 +580,7 @@ export default function AcrOnline() {
 
   if (phase === "start") {
     return (
-      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
         <h2>Round Setup</h2>
         <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
           Theme is hidden until you begin writing.
