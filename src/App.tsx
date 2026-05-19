@@ -429,23 +429,36 @@ export default function AcrOnline() {
         <h1>AcrOnline</h1>
 
         <h2>Players</h2>
-        {players.map((player, idx) => (
-          <div key={idx} style={{ marginBottom: "8px" }}>
-            <input
-              type="text"
-              value={player}
-              onChange={(e) => updatePlayerName(idx, e.target.value)}
-              placeholder={`Player ${idx + 1} name`}
-              style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-          </div>
-        ))}
-
+{players.map((player, idx) => (
+  <div key={idx} style={{ marginBottom: "8px", display: "flex", gap: "8px" }}>
+    <input
+      type="text"
+      value={player}
+      onChange={(e) => updatePlayerName(idx, e.target.value)}
+      placeholder={`Player ${idx + 1} name`}
+      style={{
+        flex: 1,
+        padding: "8px",
+        borderRadius: "6px",
+        border: "1px solid #ccc",
+      }}
+    />
+    <button
+      onClick={() => setPlayers(players.filter((_, i) => i !== idx))}
+      style={{
+        padding: "8px 12px",
+        borderRadius: "6px",
+        background: "#ff4444",
+        color: "white",
+        fontWeight: "bold",
+        cursor: "pointer",
+        border: "none",
+      }}
+    >
+      ✕
+    </button>
+  </div>
+))}
         <button
           onClick={addPlayer}
           disabled={players.length >= 6}
