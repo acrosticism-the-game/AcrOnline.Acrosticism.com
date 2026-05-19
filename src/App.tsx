@@ -88,7 +88,7 @@ export default function AcrOnline() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerRunning]);
+  }, [timerRunning, timeLeft]);
 
   const startTimer = () => {
     setTimeLeft(TIMER_SECONDS);
