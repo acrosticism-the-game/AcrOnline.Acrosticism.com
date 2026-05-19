@@ -231,7 +231,7 @@ export default function AcrOnline() {
     const timerColor = timeLeft <= 30 ? "#ff4444" : timeLeft <= 60 ? "#ffaa00" : "#44cc44";
 
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "transparent", minHeight: "100vh" }}>
         <h2>Writing Phase</h2>
         <h3>Player: {currentPlayer}</h3>
 
