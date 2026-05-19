@@ -425,8 +425,7 @@ export default function AcrOnline() {
   // Phase rendering
   if (phase === "setup") {
     return (
-      <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-        <h1 style={{
+<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc" }}>        <h1 style={{
   textAlign: "center",
   color: "#fff2cc",
   fontFamily: "Nunito, sans-serif",
@@ -434,6 +433,7 @@ export default function AcrOnline() {
   background: "#1155cc",
   padding: "12px",
   borderRadius: "8px",
+  fontSize: "63px",
 }}>
   Play Acrosticism Online
 </h1>
@@ -477,12 +477,13 @@ export default function AcrOnline() {
             padding: "8px 16px",
             borderRadius: "6px",
             cursor: players.length >= 6 ? "not-allowed" : "pointer",
+            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
           }}
         >
           Add Player
         </button>
 
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ marginTop: "20px", textAlign: "center" }}>
           <h2>Theme</h2>
           <div style={{ marginBottom: "8px" }}>
             <label>
@@ -510,7 +511,7 @@ export default function AcrOnline() {
           </div>
 
           {themeMode === "custom" && (
-            <div style={{ marginTop: "10px" }}>
+            <div style={{ marginTop: "10px", textAlign: "center" }}>
               <input
                 type="text"
                 value={customTheme}
