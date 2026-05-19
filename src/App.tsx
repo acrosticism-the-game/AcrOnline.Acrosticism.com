@@ -346,7 +346,7 @@ export default function AcrOnline() {
   // Render reveal phase
   const renderRevealPhase = () => {
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",, minHeight: "100vh" }}>
         <h2>Submissions</h2>
 
         {effectiveTheme && (
@@ -454,7 +454,7 @@ export default function AcrOnline() {
   // Phase rendering
   if (phase === "setup") {
     return (
-<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc" }}>        <h1 style={{
+<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", }}>        <h1 style={{
   textAlign: "center",
   color: "#fff2cc",
   fontFamily: "Nunito, sans-serif",
@@ -580,7 +580,7 @@ export default function AcrOnline() {
 
   if (phase === "start") {
     return (
-      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
         <h2>Round Setup</h2>
         <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
           Theme is hidden until you begin writing.
