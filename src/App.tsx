@@ -426,7 +426,17 @@ export default function AcrOnline() {
   if (phase === "setup") {
     return (
       <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-        <h1>AcrOnline</h1>
+        <h1 style={{
+  textAlign: "center",
+  color: "#fff2cc",
+  fontFamily: "Nunito, sans-serif",
+  fontWeight: 700,
+  background: "#1155cc",
+  padding: "12px",
+  borderRadius: "8px",
+}}>
+  Play Acrosticism Online
+</h1>
 
         <h2>Players</h2>
 {players.map((player, idx) => (
