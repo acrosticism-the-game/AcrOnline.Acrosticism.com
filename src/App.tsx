@@ -231,7 +231,7 @@ export default function AcrOnline() {
     const timerColor = timeLeft <= 30 ? "#ff4444" : timeLeft <= 60 ? "#ffaa00" : "#44cc44";
 
     return (
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
         <h2>Writing Phase</h2>
         <h3>Player: {currentPlayer}</h3>
 
@@ -344,7 +344,7 @@ export default function AcrOnline() {
   // Render reveal phase
   const renderRevealPhase = () => {
     return (
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
         <h2>Submissions</h2>
 
         {effectiveTheme && (
@@ -418,6 +418,31 @@ export default function AcrOnline() {
         >
           Next Round
         </button>
+
+        <button
+  onClick={() => {
+    setPlayers([]);
+    setPlayerWords([]);
+    setSubmissions({});
+    setCurrentLines([]);
+    setCurrentPlayerIndex(0);
+    setPhase("setup");
+  }}
+  style={{
+    marginTop: "20px",
+    marginLeft: "10px",
+    padding: "10px 20px",
+    borderRadius: "8px",
+    background: "#666",
+    color: "white",
+    fontFamily: "Nunito, sans-serif",
+    fontWeight: 700,
+    cursor: "pointer",
+    border: "none",
+  }}
+>
+  New Game
+</button>
       </div>
     );
   };
@@ -550,7 +575,7 @@ export default function AcrOnline() {
 
   if (phase === "start") {
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
+      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", background: "#1155cc", minHeight: "100vh" }}>
         <h2>Round Setup</h2>
         <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
           Theme is hidden until you begin writing.
