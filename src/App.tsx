@@ -301,7 +301,7 @@ export default function AcrOnline() {
                   fontWeight: "bold",
                   fontSize: "1.2rem",
                   color: "white",
-                  background: accent,
+                  background: "transparent",
                   borderRadius: "6px",
                   marginRight: "10px",
                 }}
@@ -393,7 +393,7 @@ export default function AcrOnline() {
                       fontWeight: "bold",
                       fontSize: "1.2rem",
                       color: "white",
-                      background: accent,
+                      background: "transparent",
                       borderRadius: "6px",
                       marginRight: "10px",
                     }}
