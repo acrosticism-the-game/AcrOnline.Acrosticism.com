@@ -271,6 +271,8 @@ export default function AcrOnline() {
               borderRadius: "8px",
               background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
               fontWeight: "bold",
+              color: "#000000",
+              textAlign: "center",
             }}
           >
             {effectiveTheme}
@@ -356,6 +358,8 @@ export default function AcrOnline() {
               borderRadius: "8px",
               background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
               fontWeight: "bold",
+              color: "#000000",
+              textAlign: "center",
             }}
           >
             Theme: {effectiveTheme}
@@ -433,8 +437,8 @@ export default function AcrOnline() {
     marginLeft: "10px",
     padding: "10px 20px",
     borderRadius: "8px",
-    background: "#666",
-    color: "white",
+    background: "linear-gradient(270deg, #ff7ee5, #7afcff)",
+    color: "#000000",
     fontFamily: "Nunito, sans-serif",
     fontWeight: 700,
     cursor: "pointer",
