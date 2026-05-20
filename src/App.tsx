@@ -393,7 +393,7 @@ export default function AcrOnline() {
                       fontWeight: "bold",
                       fontSize: "1.2rem",
                       color: "white",
-                      textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"
+                      textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
                       borderRadius: "6px",
                       marginRight: "10px",
                     }}
