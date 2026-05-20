@@ -346,7 +346,7 @@ export default function AcrOnline() {
   // Render reveal phase
   const renderRevealPhase = () => {
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",, minHeight: "100vh" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
         <h2>Time to judge your submissions! Who acrosticized the hardest?!</h2>
 
         {effectiveTheme && (
