@@ -301,6 +301,7 @@ export default function AcrOnline() {
                   fontWeight: "bold",
                   fontSize: "1.2rem",
                   color: "#000000",
+                  background: accent,
                   borderRadius: "6px",
                   marginRight: "10px",
                 }}
