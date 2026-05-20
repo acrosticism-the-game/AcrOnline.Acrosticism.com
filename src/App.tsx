@@ -463,7 +463,6 @@ export default function AcrOnline() {
   padding: "12px",
   borderRadius: "8px",
   fontSize: "50px",
-  textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
 }}>
   Play Acrosticism Online
 </h1>
