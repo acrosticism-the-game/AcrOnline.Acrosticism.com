@@ -149,7 +149,7 @@ export default function AcrOnline() {
       themes[Math.floor(Math.random() * themes.length)] || "";
     setSelectedTheme(randomTheme);
 
-    setCurrentPlayerIndex(0);
+    setCurrentPlayerIndex(1);
     setSubmissions({});
     setCurrentLines([]);
     setThemeRevealed(false);
@@ -231,8 +231,8 @@ export default function AcrOnline() {
     const timerColor = timeLeft <= 30 ? "#ff4444" : timeLeft <= 60 ? "#ffaa00" : "#44cc44";
 
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
-        <h2>Writing Phase</h2>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", minHeight: "100vh" }}>
+        <h2>Acrosticize your Word! You have 2 minutes.</h2>
         <h3>Player: {currentPlayer}</h3>
 
         {/* Timer */}
@@ -258,7 +258,7 @@ export default function AcrOnline() {
               fontSize: "1.2rem",
             }}
           >
-            Time is up! Submit your lines.
+            Time is up! Submit your backronym.
           </div>
         )}
 
@@ -300,8 +300,7 @@ export default function AcrOnline() {
                   justifyContent: "center",
                   fontWeight: "bold",
                   fontSize: "1.2rem",
-                  color: "white",
-                  textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+                  color: "#000000",
                   borderRadius: "6px",
                   marginRight: "10px",
                 }}
@@ -346,7 +345,7 @@ export default function AcrOnline() {
   // Render reveal phase
   const renderRevealPhase = () => {
     return (
-      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", minHeight: "100vh" }}>
+      <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", minHeight: "100vh" }}>
         <h2>Time to judge your submissions! Who acrosticized the hardest?!</h2>
 
         {effectiveTheme && (
@@ -392,8 +391,7 @@ export default function AcrOnline() {
                       justifyContent: "center",
                       fontWeight: "bold",
                       fontSize: "1.2rem",
-                      color: "white",
-                      textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+                      color: "#000000",
                       borderRadius: "6px",
                       marginRight: "10px",
                     }}
