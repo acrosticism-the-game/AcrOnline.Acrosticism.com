@@ -125,6 +125,7 @@ export default function JudgingScreen({
             padding: "16px",
             borderRadius: "10px",
             background: "rgba(255,255,255,0.08)",
+            textAlign: "left",
           }}
         >
           <h3 style={{ marginBottom: "10px" }}>
@@ -137,7 +138,6 @@ export default function JudgingScreen({
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
                 marginBottom: "6px",
               }}
             >
