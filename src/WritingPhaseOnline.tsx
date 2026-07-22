@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 
 const TIMER_SECONDS = 120;
@@ -74,7 +74,7 @@ export default function WritingPhaseOnline({
     setCurrentLines(updated);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const { error } = await supabase.from("submissions").insert({
@@ -91,7 +91,7 @@ export default function WritingPhaseOnline({
 
     setHasSubmitted(true);
     onSubmitted();
-  };
+  }, [roundId, playerId, assignedWord, currentLines, onSubmitted]);
 
   // Auto-submit when timer hits 0
   useEffect(() => {
