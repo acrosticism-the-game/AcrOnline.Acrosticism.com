@@ -98,7 +98,7 @@ export default function WritingPhaseOnline({
     if (!isJudge && timeLeft === 0 && !hasSubmitted) {
       handleSubmit();
     }
-  }, [timeLeft, isJudge, hasSubmitted]);
+  }, [timeLeft, isJudge, hasSubmitted, handleSubmit]);
   if (isJudge) {
     return (
       <div
