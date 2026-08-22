@@ -36,9 +36,9 @@ type ThemeMode = "random" | "custom";
 const TIMER_SECONDS = 120;
 
 export default function AcrOnline() {
-  // Transparent background
+  // App background
   useEffect(() => {
-    document.body.style.background = "transparent";
+    document.body.style.background = "#0d1b3d";
   }, []);
 
   // Core state
