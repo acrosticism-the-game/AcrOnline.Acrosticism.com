@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "./Header";
 
 type ThemeSelectProps = {
   isJudge: boolean;
@@ -31,6 +32,7 @@ export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSel
           minHeight: "100vh",
         }}
       >
+      <Header />
         <h2>Waiting for the Judge to choose a theme...</h2>
       </div>
     );
@@ -49,6 +51,7 @@ export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSel
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "20px" }}>
         You're the Judge!
       </h1>

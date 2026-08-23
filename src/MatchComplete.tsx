@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 type PlayerScore = {
@@ -45,6 +46,7 @@ export default function MatchComplete({ roomId, onPlayAgain, onBuyNow }: MatchCo
           minHeight: "100vh",
         }}
       >
+        <Header />
         Loading final results...
       </div>
     );
@@ -66,6 +68,7 @@ export default function MatchComplete({ roomId, onPlayAgain, onBuyNow }: MatchCo
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "20px" }}>
          Round Complete!
       </h1>

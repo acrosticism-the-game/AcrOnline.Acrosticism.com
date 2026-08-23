@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 const TIMER_SECONDS = 120;
@@ -111,6 +112,7 @@ export default function WritingPhaseOnline({
           minHeight: "100vh",
         }}
       >
+        <Header />
         <h2>Theme: {theme}</h2>
         <p style={{ fontSize: "1.2rem", marginTop: "20px" }}>
           Players are acrosticizing...
@@ -131,6 +133,7 @@ export default function WritingPhaseOnline({
           minHeight: "100vh",
         }}
       >
+        <Header />
         <h2>Submitted! Waiting for other players...</h2>
       </div>
     );
@@ -150,6 +153,7 @@ export default function WritingPhaseOnline({
         minHeight: "100vh",
       }}
     >
+      <Header />
       <div
           style={{
             marginBottom: "20px",

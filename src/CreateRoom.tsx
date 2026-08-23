@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "./Header";
 import { createRoom, filterRoomCodeWords } from "./roomUtils";
 
 type CreateRoomProps = {
@@ -46,6 +47,7 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "30px" }}>
         You Are The Host!
       </h1>

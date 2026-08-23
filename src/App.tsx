@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 import OnlineLanding from "./OnlineLanding";
 import CreateRoom from "./CreateRoom";
@@ -38,7 +39,7 @@ const TIMER_SECONDS = 120;
 export default function AcrOnline() {
   // App background
   useEffect(() => {
-    document.body.style.background = "#0d1b3d";
+    document.body.style.background = "#B33A6B";
   }, []);
 
   // Core state
@@ -346,6 +347,7 @@ return () => {
 
     return (
       <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
+        <Header />
         <h2>Acrosticize your Word! You have 2 minutes.</h2>
         <h3>Player: {currentPlayer}</h3>
 
@@ -461,6 +463,7 @@ return () => {
   const renderRevealPhase = () => {
     return (
       <div style={{ padding: "20px", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
+        <Header />
         <h2>Time to judge your submissions!</h2>
 
         {effectiveTheme && (
@@ -762,7 +765,9 @@ if (currentRound.phase === "writing") {
   // Phase rendering
   if (phase === "setup") {
     return (
-<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"}}>        <h1 style={{
+<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"}}>
+        <Header />
+        <h1 style={{
   textAlign: "center",
   color: "#fff2cc",
   fontFamily: "Nunito, sans-serif",
@@ -905,6 +910,7 @@ if (currentRound.phase === "writing") {
   if (phase === "start") {
     return (
       <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
+        <Header />
         <h2>Get Ready!</h2>
         <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
           The theme is hidden until you begin acrosticizing.

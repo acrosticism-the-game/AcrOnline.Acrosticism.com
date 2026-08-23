@@ -1,4 +1,5 @@
 import React from "react";
+import Header from "./Header";
 
 type OnlineLandingProps = {
   onSelectCreate: () => void;
@@ -20,6 +21,7 @@ export default function OnlineLanding({ onSelectCreate, onSelectJoin, onBackToHo
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1
         style={{
           fontWeight: 700,

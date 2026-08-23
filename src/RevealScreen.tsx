@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 type WinningSubmission = {
@@ -77,6 +78,7 @@ export default function RevealScreen({
           minHeight: "100vh",
         }}
       >
+        <Header />
         Loading results...
       </div>
     );
@@ -95,6 +97,7 @@ export default function RevealScreen({
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "10px" }}>
         Winner!
       </h1>

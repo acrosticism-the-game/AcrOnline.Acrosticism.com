@@ -1,4 +1,5 @@
 import React from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 type PostMatchChoiceProps = {
@@ -26,6 +27,7 @@ export default function PostMatchChoice({
           minHeight: "100vh",
         }}
       >
+        <Header />
         <h2>Round complete! Waiting for the host to decide what's next...</h2>
       </div>
     );
@@ -44,6 +46,7 @@ export default function PostMatchChoice({
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "30px" }}>
         Round Complete!
       </h1>

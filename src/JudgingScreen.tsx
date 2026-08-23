@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 type Submission = {
@@ -64,6 +65,7 @@ export default function JudgingScreen({
           minHeight: "100vh",
         }}
       >
+        <Header />
         <h2>The Judge is reviewing backronyms...</h2>
       </div>
     );
@@ -80,6 +82,7 @@ export default function JudgingScreen({
           minHeight: "100vh",
         }}
       >
+        <Header />
         Loading submissions...
       </div>
     );
@@ -98,6 +101,7 @@ export default function JudgingScreen({
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "10px" }}>
         You're Judging!
       </h1>

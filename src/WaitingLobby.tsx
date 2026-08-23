@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
 type Player = {
@@ -68,6 +69,7 @@ export default function WaitingLobby({ roomId, roomCode, playerId, isHost, onSta
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "10px" }}>
         Waiting Lobby
       </h1>

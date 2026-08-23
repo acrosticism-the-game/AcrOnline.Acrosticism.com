@@ -1,5 +1,5 @@
 import React from "react";
-
+import Header from "./Header";
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
   onSelectOnline: () => void;
@@ -19,6 +19,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1
         style={{
           fontWeight: 700,

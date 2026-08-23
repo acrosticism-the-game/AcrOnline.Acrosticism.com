@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from "./Header";
 import { joinRoom } from "./roomUtils";
 
 type JoinRoomProps = {
@@ -48,6 +49,7 @@ export default function JoinRoom({ onRoomJoined, onBack }: JoinRoomProps) {
         minHeight: "100vh",
       }}
     >
+      <Header />
       <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "30px" }}>
         Join The Game
       </h1>
