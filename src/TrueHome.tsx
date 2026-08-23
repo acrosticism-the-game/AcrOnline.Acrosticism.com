@@ -66,13 +66,62 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
         Online Play
       </button>
 
-      <a
-        href="https://shop.acrosticism.com"
+      
+       <a
+       href="https://www.acrosticism.com/the-game/how-to-play"
         target="_blank"
         rel="noopener noreferrer"
         style={{ textDecoration: "none" }}
       >
-<button
+        <button
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "16px",
+            marginBottom: "16px",
+            borderRadius: "8px",
+            background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
+            fontWeight: "bold",
+            fontSize: "1.1rem",
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          How to Play
+        </button>
+      </a>
+
+      
+       <a href="https://www.acrosticism.com/store"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ textDecoration: "none" }}
+      >
+        <button
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "16px",
+            marginBottom: "16px",
+            borderRadius: "8px",
+            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+            fontWeight: "bold",
+            fontSize: "1.1rem",
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          The Store
+        </button>
+      </a>
+
+      
+        <a href="https://www.acrosticism.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ textDecoration: "none" }}
+      >
+        <button
           style={{
             display: "block",
             width: "100%",
@@ -85,7 +134,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
             border: "none",
           }}
         >
-          Buy Now
+          Home
         </button>
       </a>
     </div>
