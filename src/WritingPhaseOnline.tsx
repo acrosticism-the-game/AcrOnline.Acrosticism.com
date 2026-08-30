@@ -11,6 +11,7 @@ type WritingPhaseOnlineProps = {
   theme: string;
   words: string[];
   onSubmitted: () => void;
+  onForceAdvance: () => void;
 };
 
 export default function WritingPhaseOnline({
@@ -20,6 +21,7 @@ export default function WritingPhaseOnline({
   theme,
   words,
   onSubmitted,
+  onForceAdvance,
 }: WritingPhaseOnlineProps) {
   const [assignedWord, setAssignedWord] = useState("");
   const [currentLines, setCurrentLines] = useState<string[]>([]);
@@ -117,6 +119,20 @@ export default function WritingPhaseOnline({
         <p style={{ fontSize: "1.2rem", marginTop: "20px" }}>
           Players are acrosticizing...
         </p>
+        <button
+          onClick={onForceAdvance}
+          style={{
+            marginTop: "20px",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+            fontWeight: "bold",
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          Force Continue
+        </button>
       </div>
     );
   }

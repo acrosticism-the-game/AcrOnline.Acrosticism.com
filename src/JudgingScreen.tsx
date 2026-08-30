@@ -16,6 +16,8 @@ type JudgingScreenProps = {
   anonymousSubmissions: boolean;
   theme: string;
   onWinnerChosen: (submissionId: string) => void;
+  onTieChosen: (submissionIds: string[]) => void;
+  onLie: () => void;
 };
 
 export default function JudgingScreen({
@@ -24,9 +26,12 @@ export default function JudgingScreen({
   anonymousSubmissions,
   theme,
   onWinnerChosen,
+  onTieChosen,
+  onLie,
 }: JudgingScreenProps) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -44,7 +49,6 @@ export default function JudgingScreen({
           player_name: s.room_players?.player_name,
         }));
 
-        // Shuffle so submission order doesn't hint at anything
         const shuffled = [...formatted].sort(() => Math.random() - 0.5);
         setSubmissions(shuffled);
       }
@@ -53,6 +57,13 @@ export default function JudgingScreen({
 
     fetchSubmissions();
   }, [roundId]);
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   if (!isJudge) {
     return (
       <div
@@ -88,6 +99,9 @@ export default function JudgingScreen({
     );
   }
 
+  const winnerEnabled = selectedIds.length === 1;
+  const tieEnabled = selectedIds.length >= 2;
+
   return (
     <div
       style={{
@@ -119,68 +133,112 @@ export default function JudgingScreen({
       >
         {theme}
       </div>
-      <p style={{ marginBottom: "20px" }}>Pick your favorite backronym.</p>
+      <p style={{ marginBottom: "20px" }}>Select the winning backronym(s).</p>
 
-      {submissions.map((sub, subIndex) => (
-        <div
-          key={sub.id}
-          style={{
-            marginBottom: "24px",
-            padding: "16px",
-            borderRadius: "10px",
-            background: "rgba(255,255,255,0.08)",
-            textAlign: "left",
-          }}
-        >
-          <h3 style={{ marginBottom: "10px" }}>
-            {anonymousSubmissions ? `Submission ${subIndex + 1}` : sub.player_name}
-          </h3>
-
-          {sub.assigned_word.split("").map((letter, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "6px",
-              }}
-            >
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                  color: "#000000",
-                  background: "linear-gradient(135deg, #ff7ee5, #7afcff)",
-                  borderRadius: "6px",
-                  marginRight: "10px",
-                }}
-              >
-                {letter.toUpperCase()}
-              </div>
-              <div style={{ fontSize: "1rem" }}>{sub.lines[i] || ""}</div>
-            </div>
-          ))}
-
-          <button
-            onClick={() => onWinnerChosen(sub.id)}
+      {submissions.map((sub, subIndex) => {
+        const isSelected = selectedIds.includes(sub.id);
+        return (
+          <div
+            key={sub.id}
             style={{
-              marginTop: "10px",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-              fontWeight: "bold",
-              cursor: "pointer",
-              border: "none",
+              marginBottom: "24px",
+              padding: "16px",
+              borderRadius: "10px",
+              background: isSelected ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",
+              textAlign: "left",
+              border: isSelected ? "2px solid #ff7ee5" : "2px solid transparent",
             }}
           >
-            Winner
-          </button>
-        </div>
-      ))}
+            <label style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleSelected(sub.id)}
+              />
+              <h3 style={{ margin: 0 }}>
+                {anonymousSubmissions ? `Submission ${subIndex + 1}` : sub.player_name}
+              </h3>
+            </label>
+
+            {sub.assigned_word.split("").map((letter, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                    color: "#000000",
+                    background: "linear-gradient(135deg, #ff7ee5, #7afcff)",
+                    borderRadius: "6px",
+                    marginRight: "10px",
+                  }}
+                >
+                  {letter.toUpperCase()}
+                </div>
+                <div style={{ fontSize: "1rem" }}>{sub.lines[i] || ""}</div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <button
+          onClick={() => onWinnerChosen(selectedIds[0])}
+          disabled={!winnerEnabled}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+            fontWeight: "bold",
+            cursor: winnerEnabled ? "pointer" : "not-allowed",
+            border: "none",
+            opacity: winnerEnabled ? 1 : 0.4,
+          }}
+        >
+          Winner
+        </button>
+
+        <button
+          onClick={() => onTieChosen(selectedIds)}
+          disabled={!tieEnabled}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
+            fontWeight: "bold",
+            cursor: tieEnabled ? "pointer" : "not-allowed",
+            border: "none",
+            opacity: tieEnabled ? 1 : 0.4,
+          }}
+        >
+          It's A Tie!
+        </button>
+
+        <button
+          onClick={onLie}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "linear-gradient(270deg, #ff7ee5, #7afcff)",
+            fontWeight: "bold",
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          It's A Lie!
+        </button>
+      </div>
     </div>
   );
 }

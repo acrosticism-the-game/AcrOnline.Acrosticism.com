@@ -168,7 +168,15 @@ export const checkAndAdvanceToJudging = async (roomId: string, roundId: string, 
 };
 
 export const chooseWinner = async (roundId: string, submissionId: string, winningPlayerId: string) => {
-  // Save the winning submission on the round
+  // Mark this submission as the winner
+  const { error: subError } = await supabase
+    .from("submissions")
+    .update({ is_winner: true })
+    .eq("id", submissionId);
+
+  if (subError) throw subError;
+
+  // Move the round to reveal
   const { error: roundError } = await supabase
     .from("rounds")
     .update({ winning_submission_id: submissionId, phase: "reveal" })
@@ -341,4 +349,62 @@ export const startNewMatch = async (roomId: string) => {
   if (roomError) throw roomError;
 
   return round;
+};
+export const forceAdvanceToJudging = async (roundId: string) => {
+  const { error } = await supabase
+    .from("rounds")
+    .update({ phase: "judging" })
+    .eq("id", roundId)
+    .eq("phase", "writing");
+
+  if (error) throw error;
+};
+export const chooseTieWinners = async (roundId: string, submissionIds: string[]) => {
+  // Mark each selected submission as a winner
+  const { error: subError } = await supabase
+    .from("submissions")
+    .update({ is_winner: true })
+    .in("id", submissionIds);
+
+  if (subError) throw subError;
+
+  // Fetch each submission's player, and increment their score
+  const { data: subs, error: fetchSubsError } = await supabase
+    .from("submissions")
+    .select("player_id")
+    .in("id", submissionIds);
+
+  if (fetchSubsError || !subs) throw fetchSubsError;
+
+  for (const sub of subs) {
+    const { data: player, error: fetchError } = await supabase
+      .from("room_players")
+      .select("score")
+      .eq("id", sub.player_id)
+      .single();
+
+    if (fetchError || !player) continue;
+
+    await supabase
+      .from("room_players")
+      .update({ score: player.score + 1 })
+      .eq("id", sub.player_id);
+  }
+
+  // Move the round to reveal
+  const { error: roundError } = await supabase
+    .from("rounds")
+    .update({ phase: "reveal" })
+    .eq("id", roundId);
+
+  if (roundError) throw roundError;
+};
+
+export const declareLie = async (roundId: string) => {
+  const { error } = await supabase
+    .from("rounds")
+    .update({ phase: "reveal" })
+    .eq("id", roundId);
+
+  if (error) throw error;
 };

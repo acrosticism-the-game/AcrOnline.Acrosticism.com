@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
 
-type WinningSubmission = {
+type Submission = {
+  id: string;
+  player_id: string;
   assigned_word: string;
   lines: string[];
   player_name: string;
+  is_winner: boolean;
 };
 
 type PlayerScore = {
@@ -17,7 +20,6 @@ type PlayerScore = {
 type RevealScreenProps = {
   roomId: string;
   roundId: string;
-  winningSubmissionId: string;
   isJudge: boolean;
   isLastTurn: boolean;
   onNextRound: () => void;
@@ -26,29 +28,31 @@ type RevealScreenProps = {
 export default function RevealScreen({
   roomId,
   roundId,
-  winningSubmissionId,
   isJudge,
   isLastTurn,
   onNextRound,
 }: RevealScreenProps) {
-  const [winner, setWinner] = useState<WinningSubmission | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [scores, setScores] = useState<PlayerScore[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: winningSub } = await supabase
+      const { data: subs } = await supabase
         .from("submissions")
-        .select("assigned_word, lines, room_players(player_name)")
-        .eq("id", winningSubmissionId)
-        .single();
+        .select("id, player_id, assigned_word, lines, is_winner, room_players(player_name)")
+        .eq("round_id", roundId);
 
-      if (winningSub) {
-        setWinner({
-          assigned_word: (winningSub as any).assigned_word,
-          lines: (winningSub as any).lines,
-          player_name: (winningSub as any).room_players?.player_name || "Unknown",
-        });
+      if (subs) {
+        const formatted = subs.map((s: any) => ({
+          id: s.id,
+          player_id: s.player_id,
+          assigned_word: s.assigned_word,
+          lines: s.lines,
+          is_winner: s.is_winner,
+          player_name: s.room_players?.player_name || "Unknown",
+        }));
+        setSubmissions(formatted);
       }
 
       const { data: players } = await supabase
@@ -65,9 +69,9 @@ export default function RevealScreen({
     };
 
     fetchData();
-  }, [roomId, winningSubmissionId]);
+  }, [roomId, roundId]);
 
-  if (loading || !winner) {
+  if (loading) {
     return (
       <div
         style={{
@@ -84,11 +88,19 @@ export default function RevealScreen({
     );
   }
 
+  const winnerCount = submissions.filter((s) => s.is_winner).length;
+  const headline =
+    winnerCount === 0
+      ? "It's A Lie! No winner this turn."
+      : winnerCount === 1
+      ? "We Have A Winner!"
+      : "It's A Tie!";
+
   return (
     <div
       style={{
         padding: "20px",
-        maxWidth: "600px",
+        maxWidth: "700px",
         margin: "0 auto",
         textAlign: "center",
         fontFamily: "Nunito, sans-serif",
@@ -98,50 +110,59 @@ export default function RevealScreen({
       }}
     >
       <Header />
-      <h1 style={{ fontWeight: 700, fontSize: "40px", marginBottom: "10px" }}>
-        Winner!
+      <h1 style={{ fontWeight: 700, fontSize: "36px", marginBottom: "20px" }}>
+        {headline}
       </h1>
 
-      <h2 style={{ marginBottom: "20px" }}>{winner.player_name}</h2>
+      {submissions.map((sub) => (
+        <div
+          key={sub.id}
+          style={{
+            marginBottom: "24px",
+            padding: "16px",
+            borderRadius: "10px",
+            background: sub.is_winner ? "rgba(255, 215, 0, 0.18)" : "rgba(255,255,255,0.08)",
+            border: sub.is_winner ? "2px solid gold" : "2px solid transparent",
+            textAlign: "left",
+          }}
+        >
+          <h3 style={{ marginBottom: "10px" }}>
+            {sub.is_winner ? "🏆 " : ""}
+            {sub.player_name}
+          </h3>
 
-      <div
-        style={{
-          marginBottom: "30px",
-          padding: "16px",
-          borderRadius: "10px",
-          background: "rgba(255,255,255,0.08)",
-        }}
-      >
-        {winner.assigned_word.split("").map((letter, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "6px",
-            }}
-          >
+          {sub.assigned_word.split("").map((letter, i) => (
             <div
+              key={i}
               style={{
-                width: "32px",
-                height: "32px",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-                color: "#000000",
-                background: "linear-gradient(135deg, #ff7ee5, #7afcff)",
-                borderRadius: "6px",
-                marginRight: "10px",
+                marginBottom: "6px",
               }}
             >
-              {letter.toUpperCase()}
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  color: "#000000",
+                  background: sub.is_winner
+                    ? "linear-gradient(135deg, gold, #ffec8b)"
+                    : "linear-gradient(135deg, #ff7ee5, #7afcff)",
+                  borderRadius: "6px",
+                  marginRight: "10px",
+                }}
+              >
+                {letter.toUpperCase()}
+              </div>
+              <div style={{ fontSize: "1rem" }}>{sub.lines[i] || ""}</div>
             </div>
-            <div style={{ fontSize: "1rem" }}>{winner.lines[i] || ""}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ))}
 
       <h2 style={{ marginBottom: "10px" }}>Scoreboard</h2>
       <div style={{ marginBottom: "30px" }}>

@@ -6,7 +6,7 @@ import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 import WaitingLobby from "./WaitingLobby";
 import { startMatch } from "./roomUtils";
-import { chooseTheme, checkAndAdvanceToJudging, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch } from "./roomUtils";
+import { chooseTheme, checkAndAdvanceToJudging, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch, forceAdvanceToJudging, chooseTieWinners, declareLie } from "./roomUtils";
 import ThemeSelect from "./ThemeSelect";
 import WritingPhaseOnline from "./WritingPhaseOnline";
 import JudgingScreen from "./JudgingScreen";
@@ -139,6 +139,31 @@ export default function AcrOnline() {
       isLastTurnOfMatch(onlineRoomId, currentRound.judge_player_id).then(setIsLastTurn);
     }
   }, [currentRound, onlineRoomId]);
+    useEffect(() => {
+    if (!currentRound || currentRound.phase !== "writing") return;
+
+    const interval = setInterval(async () => {
+      const { data: round } = await supabase
+        .from("rounds")
+        .select("writing_started_at, phase")
+        .eq("id", currentRound.id)
+        .maybeSingle();
+
+      if (!round || round.phase !== "writing" || !round.writing_started_at) return;
+
+      const elapsedSeconds = (Date.now() - new Date(round.writing_started_at).getTime()) / 1000;
+
+      if (elapsedSeconds >= 125) {
+        try {
+          await forceAdvanceToJudging(currentRound.id);
+        } catch (err: any) {
+          console.error("Failed to force-advance:", err.message);
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentRound]);
   useEffect(() => {
     if (!onlineRoomId) return;
 
@@ -706,6 +731,13 @@ if (currentRound.phase === "writing") {
               console.error("Failed to check/advance to judging:", err.message);
             }
           }}
+          onForceAdvance={async () => {
+            try {
+              await forceAdvanceToJudging(currentRound.id);
+            } catch (err: any) {
+              console.error("Failed to force advance:", err.message);
+            }
+          }}
         />
       );
     }
@@ -732,6 +764,20 @@ if (currentRound.phase === "writing") {
               console.error("Failed to choose winner:", err.message);
             }
           }}
+          onTieChosen={async (submissionIds) => {
+            try {
+              await chooseTieWinners(currentRound.id, submissionIds);
+            } catch (err: any) {
+              console.error("Failed to choose tie winners:", err.message);
+            }
+          }}
+          onLie={async () => {
+            try {
+              await declareLie(currentRound.id);
+            } catch (err: any) {
+              console.error("Failed to declare lie:", err.message);
+            }
+          }}
         />
       );
     }
@@ -741,7 +787,6 @@ if (currentRound.phase === "writing") {
         <RevealScreen
           roomId={onlineRoomId}
           roundId={currentRound.id}
-          winningSubmissionId={currentRound.winning_submission_id || ""}
           isJudge={isJudge}
           isLastTurn={isLastTurn}
           onNextRound={async () => {
