@@ -4,6 +4,12 @@ import { supabase } from "./supabaseClient";
 
 const TIMER_SECONDS = 120;
 
+const saveDraft = (key: string, word: string, lines: string[]) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ word, lines }));
+  } catch { }
+};
+
 type WritingPhaseOnlineProps = {
   roundId: string;
   playerId: string;
@@ -27,35 +33,98 @@ export default function WritingPhaseOnline({
   const [currentLines, setCurrentLines] = useState<string[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [deadline, setDeadline] = useState<number | null>(null);
+  const [ready, setReady] = useState(false);
+  const submittingRef = useRef(false);
+  const [submitError, setSubmitError] = useState("");
+  const draftKey = `acr_draft_${roundId}_${playerId}`;
 
-  // Assign a random word once, when this component mounts (non-Judges only)
+  // On load and after a refresh: sync the timer to the server, and for
+  // players also check for an existing submission and restore the draft
   useEffect(() => {
-    if (!isJudge && !assignedWord) {
-      const randomWord = words[Math.floor(Math.random() * words.length)] || "";
-      setAssignedWord(randomWord);
-      setCurrentLines(new Array(randomWord.length).fill(""));
-    }
-  }, [isJudge, assignedWord, words]);
+    let cancelled = false;
 
-  // Countdown timer
-  useEffect(() => {
-    if (isJudge || hasSubmitted) return;
+    const getDeadline = async () => {
+      const { data: round } = await supabase
+        .from("rounds")
+        .select("writing_started_at")
+        .eq("id", roundId)
+        .maybeSingle();
+      const { data: serverNow } = await supabase.rpc("server_now");
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const offset = serverNow ? new Date(serverNow).getTime() - Date.now() : 0;
+      const startedAt = round?.writing_started_at
+        ? new Date(round.writing_started_at).getTime()
+        : Date.now() + offset;
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      return startedAt + TIMER_SECONDS * 1000 - offset;
     };
-  }, [isJudge, hasSubmitted]);
+
+    const init = async () => {
+      if (isJudge) {
+        const judgeDeadline = await getDeadline();
+        if (cancelled) return;
+        setDeadline(judgeDeadline);
+        setReady(true);
+        return;
+      }
+
+      const { data: existing } = await supabase
+        .from("submissions")
+        .select("id")
+        .eq("round_id", roundId)
+        .eq("player_id", playerId)
+        .maybeSingle();
+      if (cancelled) return;
+
+      if (existing) {
+        setHasSubmitted(true);
+        setReady(true);
+        return;
+      }
+
+      let word = "";
+      let lines: string[] = [];
+      try {
+        const raw = sessionStorage.getItem(draftKey);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          word = saved.word || "";
+          lines = saved.lines || [];
+        }
+      } catch { }
+
+      if (!word) {
+        if (words.length === 0) return; // words still loading, this runs again when they arrive
+        word = words[Math.floor(Math.random() * words.length)] || "";
+        lines = new Array(word.length).fill("");
+        saveDraft(draftKey, word, lines);
+      }
+
+      const playerDeadline = await getDeadline();
+      if (cancelled) return;
+
+      setAssignedWord(word);
+      setCurrentLines(lines);
+      setDeadline(playerDeadline);
+      setReady(true);
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [roundId, playerId, isJudge, words, draftKey]);
+
+  // Countdown based on the server's start time, so a refresh never resets it
+  useEffect(() => {
+    if (hasSubmitted || deadline === null) return;
+    const tick = () =>
+      setTimeLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [isJudge, hasSubmitted, deadline]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -75,10 +144,12 @@ export default function WritingPhaseOnline({
     const updated = [...currentLines];
     updated[index] = corrected;
     setCurrentLines(updated);
+    saveDraft(draftKey, assignedWord, updated);
   };
 
   const handleSubmit = useCallback(async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (submittingRef.current) return;
+    submittingRef.current = true;
 
     const { error } = await supabase.from("submissions").insert({
       round_id: roundId,
@@ -87,21 +158,51 @@ export default function WritingPhaseOnline({
       lines: currentLines,
     });
 
-    if (error) {
+    if (error && error.code !== "23505") {
       console.error("Failed to submit:", error.message);
+      setSubmitError("Could not submit. Check your connection and tap Submit again.");
+      submittingRef.current = false;
       return;
     }
 
+    try {
+      sessionStorage.removeItem(draftKey);
+    } catch { }
+    setSubmitError("");
     setHasSubmitted(true);
     onSubmitted();
-  }, [roundId, playerId, assignedWord, currentLines, onSubmitted]);
+  }, [roundId, playerId, assignedWord, currentLines, onSubmitted, draftKey]);
 
-  // Auto-submit when timer hits 0
+  // Auto-submit when the timer hits 0
   useEffect(() => {
-    if (!isJudge && timeLeft === 0 && !hasSubmitted) {
+    if (
+      !isJudge &&
+      ready &&
+      assignedWord &&
+      deadline !== null &&
+      timeLeft === 0 &&
+      !hasSubmitted
+    ) {
       handleSubmit();
     }
-  }, [timeLeft, isJudge, hasSubmitted, handleSubmit]);
+  }, [timeLeft, isJudge, ready, assignedWord, deadline, hasSubmitted, handleSubmit]);
+
+  if (!isJudge && !ready) {
+    return (
+      <div
+        style={{
+          padding: "20px",
+          textAlign: "center",
+          fontFamily: "Nunito, sans-serif",
+          color: "#fff2cc",
+          minHeight: "100vh",
+        }}
+      >
+        <Header />
+        Loading...
+      </div>
+    );
+  }
   if (isJudge) {
     return (
       <div
@@ -116,6 +217,18 @@ export default function WritingPhaseOnline({
       >
         <Header />
         <h2>Theme: {theme}</h2>
+        {deadline !== null && (
+          <div
+            style={{
+              fontSize: "2.5rem",
+              fontWeight: "bold",
+              marginTop: "16px",
+              color: timeLeft <= 30 ? "#ff4444" : timeLeft <= 60 ? "#ffaa00" : "#44cc44",
+            }}
+          >
+            {formatTime(timeLeft)}
+          </div>
+        )}
         <p style={{ fontSize: "1.2rem", marginTop: "20px" }}>
           Players are acrosticizing...
         </p>
@@ -171,22 +284,22 @@ export default function WritingPhaseOnline({
     >
       <Header />
       <div
-          style={{
-            marginBottom: "20px",
-            fontSize: "1.2rem",
-            padding: "10px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
-            fontWeight: "bold",
-            color: "#000000",
-            textAlign: "center",
-          }}
-        >
-          {theme}
-        </div>
-        <p style={{ fontSize: "1.2rem", marginTop: "20px" }}>
-          Players are acrosticizing their backronyms...
-        </p>
+        style={{
+          marginBottom: "20px",
+          fontSize: "1.2rem",
+          padding: "10px",
+          borderRadius: "8px",
+          background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
+          fontWeight: "bold",
+          color: "#000000",
+          textAlign: "center",
+        }}
+      >
+        {theme}
+      </div>
+      <p style={{ fontSize: "1.2rem", marginTop: "20px" }}>
+        Players are acrosticizing their backronyms...
+      </p>
 
       <div
         style={{
@@ -234,7 +347,18 @@ export default function WritingPhaseOnline({
           />
         </div>
       ))}
-
+      {submitError && (
+        <div
+          style={{
+            color: "#ff4444",
+            fontWeight: "bold",
+            textAlign: "center",
+            marginTop: "12px",
+          }}
+        >
+          {submitError}
+        </div>
+      )}
       <button
         onClick={handleSubmit}
         style={{

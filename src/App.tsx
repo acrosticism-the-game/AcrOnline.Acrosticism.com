@@ -14,6 +14,7 @@ import RevealScreen from "./RevealScreen";
 import MatchComplete from "./MatchComplete";
 import PostMatchChoice from "./PostMatchChoice";
 import TrueHome from "./TrueHome";
+import { saveSession, loadSession, clearSession } from "./session";
 
 // Google Sheets CSV URLs
 const WORDS_CSV =
@@ -82,6 +83,7 @@ export default function AcrOnline() {
   const [isLastTurn, setIsLastTurn] = useState(false);
   const [matchNumber, setMatchNumber] = useState(1);
   const [showResultsPage, setShowResultsPage] = useState(false);
+  const [restoring, setRestoring] = useState(true);
 
   useEffect(() => {
     if (!onlineRoomId) return;
@@ -189,6 +191,33 @@ return () => {
 };
 }, [onlineRoomId]);
 
+useEffect(() => {
+  const restore = async () => {
+    try {
+      const saved = loadSession();
+      if (!saved) return;
+
+      const { data: room } = await supabase
+        .from("rooms").select("id").eq("id", saved.roomId).maybeSingle();
+      const { data: player } = await supabase
+        .from("room_players").select("id").eq("id", saved.playerId).maybeSingle();
+
+      if (!room || !player) {
+        clearSession();
+        return;
+      }
+
+      setOnlineRoomId(saved.roomId);
+      setOnlineRoomCode(saved.roomCode);
+      setOnlinePlayerId(saved.playerId);
+      setOnlineIsHost(saved.isHost);
+      setMode("onlineLobby");
+    } finally {
+      setRestoring(false);
+    }
+  };
+  restore();
+}, []);
   // Fetch words and themes from Google Sheets
   useEffect(() => {
     const fetchData = async () => {
@@ -593,6 +622,7 @@ return () => {
     );
   };
 
+  if (restoring) return null;
   if (mode === "trueHome") {
     return (
       <TrueHome
@@ -618,6 +648,7 @@ return () => {
       <CreateRoom
         words={words}
         onRoomCreated={(roomId, roomCode, playerId, playerName) => {
+          saveSession({ roomId, roomCode, playerId, isHost: true });
           setOnlineRoomId(roomId);
           setOnlineRoomCode(roomCode);
           setOnlinePlayerId(playerId);
@@ -633,6 +664,7 @@ return () => {
     return (
       <JoinRoom
         onRoomJoined={(roomId, roomCode, playerId, playerName) => {
+          saveSession({ roomId, roomCode, playerId, isHost: false });
           setOnlineRoomId(roomId);
           setOnlineRoomCode(roomCode);
           setOnlinePlayerId(playerId);
@@ -667,6 +699,7 @@ return () => {
   <MatchComplete
     roomId={onlineRoomId}
     onPlayAgain={() => {
+      clearSession();
       setMode("onlineLanding");
       setShowResultsPage(false);
       setOnlineRoomId("");
