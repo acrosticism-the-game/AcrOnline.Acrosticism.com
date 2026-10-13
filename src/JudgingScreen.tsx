@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
+import { seededShuffle } from "./seededShuffle";
 
 type Submission = {
   id: string;
@@ -49,8 +50,8 @@ export default function JudgingScreen({
           player_name: s.room_players?.player_name,
         }));
 
-        const shuffled = [...formatted].sort(() => Math.random() - 0.5);
-        setSubmissions(shuffled);
+        const stable = [...formatted].sort((a, b) => a.id.localeCompare(b.id));
+        setSubmissions(seededShuffle(stable, roundId));
       }
       setLoading(false);
     };

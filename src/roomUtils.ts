@@ -10,42 +10,63 @@ export const filterRoomCodeWords = (words: string[]): string[] => {
 
 // Pick a random word and try to create a room with it; retry on collision
 export const generateUniqueRoomCode = async (
-  candidateWords: string[],
-  maxAttempts = 10
+  candidateWords: string[]
 ): Promise<string | null> => {
-  const shuffled = [...candidateWords].sort(() => Math.random() - 0.5);
+  if (candidateWords.length === 0) return null;
 
-  for (let i = 0; i < Math.min(maxAttempts, shuffled.length); i++) {
-    const code = shuffled[i].toUpperCase();
-    const { data } = await supabase
-      .from("rooms")
-      .select("id")
-      .eq("room_code", code)
-      .maybeSingle();
+  const { data: existing, error } = await supabase
+    .from("rooms")
+    .select("room_code");
+  if (error) throw error;
 
-    if (!data) {
-      return code; // no existing room with this code — safe to use
-    }
+  const taken = new Set(
+    (existing || []).map((r: any) => String(r.room_code).toUpperCase())
+  );
+  const upper = candidateWords.map((w) => w.toUpperCase());
+
+  const free = upper.filter((w) => !taken.has(w));
+  if (free.length > 0) {
+    return free[Math.floor(Math.random() * free.length)];
+  }
+
+  for (let i = 0; i < 50; i++) {
+    const base = upper[Math.floor(Math.random() * upper.length)];
+    const code = base + Math.floor(10 + Math.random() * 90);
+    if (!taken.has(code)) return code;
   }
 
   return null; // ran out of attempts, extremely unlikely
 };
 
+const makeToken = () =>
+  Math.random().toString(36).slice(2) + Date.now().toString(36);
+
 export const createRoom = async (
   hostName: string,
   anonymousSubmissions: boolean,
-  candidateWords: string[]
+  candidateWords: string[],
+  hostAsSpectator = false
 ) => {
   const roomCode = await generateUniqueRoomCode(candidateWords);
   if (!roomCode) throw new Error("Could not generate a unique room code. Try again.");
 
+  const hostToken = hostAsSpectator ? makeToken() : "";
+
   const { data: room, error: roomError } = await supabase
     .from("rooms")
-    .insert({ room_code: roomCode, anonymous_submissions: anonymousSubmissions })
+    .insert({
+      room_code: roomCode,
+      anonymous_submissions: anonymousSubmissions,
+      host_token: hostAsSpectator ? hostToken : null,
+    })
     .select()
     .single();
 
   if (roomError || !room) throw roomError;
+
+  if (hostAsSpectator) {
+    return { room, player: null, hostToken };
+  }
 
   const { data: player, error: playerError } = await supabase
     .from("room_players")
@@ -55,7 +76,7 @@ export const createRoom = async (
 
   if (playerError || !player) throw playerError;
 
-  return { room, player };
+  return { room, player, hostToken: "" };
 };
 
 export const joinRoom = async (roomCode: string, playerName: string) => {

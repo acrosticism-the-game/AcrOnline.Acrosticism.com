@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
+import { Role } from "./session";
 
 type Player = {
   id: string;
@@ -14,10 +16,20 @@ type WaitingLobbyProps = {
   roomCode: string;
   playerId: string;
   isHost: boolean;
+  role: Role;
+  spectatorCount: number;
   onStartMatch: () => void;
 };
 
-export default function WaitingLobby({ roomId, roomCode, playerId, isHost, onStartMatch }: WaitingLobbyProps) {
+export default function WaitingLobby({
+  roomId,
+  roomCode,
+  playerId,
+  isHost,
+  role,
+  spectatorCount,
+  onStartMatch,
+}: WaitingLobbyProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState("");
 
@@ -56,11 +68,18 @@ export default function WaitingLobby({ roomId, roomCode, playerId, isHost, onSta
   }, [roomId]);
 
   const canStart = players.length >= 3 && players.length <= 7;
+  const isProjector = role === "host-spectator";
+  const joinLink = `${window.location.origin}/?room=${encodeURIComponent(roomCode)}`;
+  const spectatorLine =
+    spectatorCount === 1
+      ? "1 spectator is watching the game."
+      : `${spectatorCount} spectators are watching the game.`;
+
   return (
     <div
       style={{
         padding: "20px",
-        maxWidth: "600px",
+        maxWidth: isProjector ? "900px" : "600px",
         margin: "0 auto",
         textAlign: "center",
         fontFamily: "Nunito, sans-serif",
@@ -74,19 +93,56 @@ export default function WaitingLobby({ roomId, roomCode, playerId, isHost, onSta
         Waiting Lobby
       </h1>
 
-      <div style={{ fontSize: "1.3rem", marginBottom: "30px" }}>
-        Room Code: <strong>{roomCode}</strong>
-      </div>
+      {isProjector ? (
+        <div style={{ marginBottom: "30px" }}>
+          <div style={{ fontSize: "1.3rem", marginBottom: "8px" }}>Room Code</div>
+          <div
+            style={{
+              fontSize: "5rem",
+              fontWeight: 800,
+              letterSpacing: "0.15em",
+              marginBottom: "20px",
+            }}
+          >
+            {roomCode}
+          </div>
+          <div
+            style={{
+              display: "inline-block",
+              background: "#ffffff",
+              padding: "16px",
+              borderRadius: "12px",
+              marginBottom: "12px",
+            }}
+          >
+            <QRCodeSVG value={joinLink} size={220} />
+          </div>
+          <div style={{ fontSize: "1.1rem" }}>
+            Scan to join, or visit {window.location.host} and enter the code.
+          </div>
+        </div>
+      ) : (
+        <div style={{ fontSize: "1.3rem", marginBottom: "30px" }}>
+          Room Code: <strong>{roomCode}</strong>
+        </div>
+      )}
 
       <h2 style={{ marginBottom: "10px" }}>Players ({players.length}/7)</h2>
 
       <div style={{ marginBottom: "20px" }}>
         {players.map((p) => (
-          <div key={p.id} style={{ fontSize: "1.1rem", marginBottom: "6px" }}>
+          <div
+            key={p.id}
+            style={{ fontSize: isProjector ? "1.6rem" : "1.1rem", marginBottom: "6px" }}
+          >
             {p.player_name} {p.id === playerId ? "(you)" : ""}
           </div>
         ))}
       </div>
+
+      {spectatorCount > 0 && (
+        <div style={{ marginBottom: "20px", fontSize: "1.1rem" }}>{spectatorLine}</div>
+      )}
 
       {error && (
         <div style={{ color: "#ff4444", marginBottom: "16px", fontWeight: "bold" }}>
@@ -96,7 +152,7 @@ export default function WaitingLobby({ roomId, roomCode, playerId, isHost, onSta
 
       {!canStart && (
         <div style={{ marginBottom: "16px", fontSize: "1rem" }}>
-          Need 3–7 players to start. Currently {players.length}.
+          Need 3 to 7 players to start. Currently {players.length}.
         </div>
       )}
 

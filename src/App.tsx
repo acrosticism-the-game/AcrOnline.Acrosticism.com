@@ -14,7 +14,10 @@ import RevealScreen from "./RevealScreen";
 import MatchComplete from "./MatchComplete";
 import PostMatchChoice from "./PostMatchChoice";
 import TrueHome from "./TrueHome";
-import { saveSession, loadSession, clearSession } from "./session";
+import { saveSession, loadSession, clearSession, Role } from "./session";
+import { useSpectatorCount } from "./presence";
+import SpectatorWriting from "./SpectatorWriting";
+import SpectatorJudging from "./SpectatorJudging";
 
 // Google Sheets CSV URLs
 const WORDS_CSV =
@@ -84,6 +87,10 @@ export default function AcrOnline() {
   const [matchNumber, setMatchNumber] = useState(1);
   const [showResultsPage, setShowResultsPage] = useState(false);
   const [restoring, setRestoring] = useState(true);
+  const [onlineRole, setOnlineRole] = useState<Role>("player");
+  const [hostToken, setHostToken] = useState("");
+  const [initialCode, setInitialCode] = useState("");
+  const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
 
   useEffect(() => {
     if (!onlineRoomId) return;
@@ -129,7 +136,7 @@ export default function AcrOnline() {
       .subscribe();
 
     fetchCurrentRound();
-    
+
 
     return () => {
       supabase.removeChannel(channel);
@@ -141,8 +148,8 @@ export default function AcrOnline() {
       isLastTurnOfMatch(onlineRoomId, currentRound.judge_player_id).then(setIsLastTurn);
     }
   }, [currentRound, onlineRoomId]);
-    useEffect(() => {
-    if (!currentRound || currentRound.phase !== "writing") return;
+  useEffect(() => {
+    if (!currentRound || currentRound.phase !== "writing" || onlineRole !== "player") return;
 
     const interval = setInterval(async () => {
       const { data: round } = await supabase
@@ -165,59 +172,72 @@ export default function AcrOnline() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentRound]);
+  }, [currentRound, onlineRole]);
   useEffect(() => {
     if (!onlineRoomId) return;
 
-const roomChannel = supabase
-  .channel(`room-status-${onlineRoomId}`)
-  .on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "rooms", filter: `id=eq.${onlineRoomId}` },
-    (payload: any) => {
-      if (payload.new) {
-        setRoomStatus(payload.new.status);
-        setAnonymousSubmissions(payload.new.anonymous_submissions);
-        setMatchNumber(payload.new.match_number);
+    const roomChannel = supabase
+      .channel(`room-status-${onlineRoomId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rooms", filter: `id=eq.${onlineRoomId}` },
+        (payload: any) => {
+          if (payload.new) {
+            setRoomStatus(payload.new.status);
+            setAnonymousSubmissions(payload.new.anonymous_submissions);
+            setMatchNumber(payload.new.match_number);
 
-        setShowResultsPage(payload.new.viewing_results);
+            setShowResultsPage(payload.new.viewing_results);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(roomChannel);
+    };
+  }, [onlineRoomId]);
+
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const saved = loadSession();
+        if (!saved) {
+          const codeFromUrl = new URLSearchParams(window.location.search).get("room");
+          if (codeFromUrl) {
+            setInitialCode(codeFromUrl.toUpperCase());
+            setMode("onlineJoin");
+          }
+          return;
+        }
+
+        const { data: room } = await supabase
+          .from("rooms").select("id").eq("id", saved.roomId).maybeSingle();
+        let playerOk = true;
+        if (saved.role === "player") {
+          const { data: player } = await supabase
+            .from("room_players").select("id").eq("id", saved.playerId).maybeSingle();
+          playerOk = !!player;
+        }
+
+        if (!room || !playerOk) {
+          clearSession();
+          return;
+        }
+
+        setOnlineRoomId(saved.roomId);
+        setOnlineRoomCode(saved.roomCode);
+        setOnlinePlayerId(saved.playerId);
+        setOnlineIsHost(saved.isHost);
+        setOnlineRole(saved.role);
+        setHostToken(saved.hostToken);
+        setMode("onlineLobby");
+      } finally {
+        setRestoring(false);
       }
-    }
-  )
-  .subscribe();
-
-return () => {
-  supabase.removeChannel(roomChannel);
-};
-}, [onlineRoomId]);
-
-useEffect(() => {
-  const restore = async () => {
-    try {
-      const saved = loadSession();
-      if (!saved) return;
-
-      const { data: room } = await supabase
-        .from("rooms").select("id").eq("id", saved.roomId).maybeSingle();
-      const { data: player } = await supabase
-        .from("room_players").select("id").eq("id", saved.playerId).maybeSingle();
-
-      if (!room || !player) {
-        clearSession();
-        return;
-      }
-
-      setOnlineRoomId(saved.roomId);
-      setOnlineRoomCode(saved.roomCode);
-      setOnlinePlayerId(saved.playerId);
-      setOnlineIsHost(saved.isHost);
-      setMode("onlineLobby");
-    } finally {
-      setRestoring(false);
-    }
-  };
-  restore();
-}, []);
+    };
+    restore();
+  }, []);
   // Fetch words and themes from Google Sheets
   useEffect(() => {
     const fetchData = async () => {
@@ -595,29 +615,29 @@ useEffect(() => {
         </button>
 
         <button
-  onClick={() => {
-    setPlayers([]);
-    setPlayerWords([]);
-    setSubmissions({});
-    setCurrentLines([]);
-    setCurrentPlayerIndex(0);
-    setPhase("setup");
-  }}
-  style={{
-    marginTop: "20px",
-    marginLeft: "10px",
-    padding: "10px 20px",
-    borderRadius: "8px",
-    background: "linear-gradient(270deg, #ff7ee5, #7afcff)",
-    color: "#000000",
-    fontFamily: "Nunito, sans-serif",
-    fontWeight: 700,
-    cursor: "pointer",
-    border: "none",
-  }}
->
-  New Game
-</button>
+          onClick={() => {
+            setPlayers([]);
+            setPlayerWords([]);
+            setSubmissions({});
+            setCurrentLines([]);
+            setCurrentPlayerIndex(0);
+            setPhase("setup");
+          }}
+          style={{
+            marginTop: "20px",
+            marginLeft: "10px",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            background: "linear-gradient(270deg, #ff7ee5, #7afcff)",
+            color: "#000000",
+            fontFamily: "Nunito, sans-serif",
+            fontWeight: 700,
+            cursor: "pointer",
+            border: "none",
+          }}
+        >
+          New Game
+        </button>
       </div>
     );
   };
@@ -647,12 +667,14 @@ useEffect(() => {
     return (
       <CreateRoom
         words={words}
-        onRoomCreated={(roomId, roomCode, playerId, playerName) => {
-          saveSession({ roomId, roomCode, playerId, isHost: true });
+        onRoomCreated={(roomId, roomCode, playerId, playerName, role, token) => {
+          saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
           setOnlineRoomId(roomId);
           setOnlineRoomCode(roomCode);
           setOnlinePlayerId(playerId);
           setOnlineIsHost(true);
+          setOnlineRole(role);
+          setHostToken(token);
           setMode("onlineLobby");
         }}
         onBack={() => setMode("onlineLanding")}
@@ -663,12 +685,14 @@ useEffect(() => {
   if (mode === "onlineJoin") {
     return (
       <JoinRoom
-        onRoomJoined={(roomId, roomCode, playerId, playerName) => {
-          saveSession({ roomId, roomCode, playerId, isHost: false });
+        initialCode={initialCode}
+        onRoomJoined={(roomId, roomCode, playerId, playerName, role) => {
+          saveSession({ roomId, roomCode, playerId, isHost: false, role });
           setOnlineRoomId(roomId);
           setOnlineRoomCode(roomCode);
           setOnlinePlayerId(playerId);
           setOnlineIsHost(false);
+          setOnlineRole(role);
           setMode("onlineLobby");
         }}
         onBack={() => setMode("onlineLanding")}
@@ -683,6 +707,8 @@ useEffect(() => {
         roomCode={onlineRoomCode}
         playerId={onlinePlayerId}
         isHost={onlineIsHost}
+        role={onlineRole}
+        spectatorCount={spectatorCount}
         onStartMatch={async () => {
           try {
             await startMatch(onlineRoomId);
@@ -696,38 +722,99 @@ useEffect(() => {
   if (mode === "onlineRound" && roomStatus === "match_complete") {
     if (matchNumber >= 3 || showResultsPage) {
       return (
-  <MatchComplete
-    roomId={onlineRoomId}
-    onPlayAgain={() => {
-      clearSession();
-      setMode("onlineLanding");
-      setShowResultsPage(false);
-      setOnlineRoomId("");
-      setOnlineRoomCode("");
-      setOnlinePlayerId("");
-      setMatchNumber(1);
-    }}
-    onBuyNow={() => {
-      window.location.href = "https://shop.acrosticism.com";
-    }}
-  />
-);
+        <MatchComplete
+          roomId={onlineRoomId}
+          onPlayAgain={() => {
+            clearSession();
+            setOnlineRole("player");
+            setHostToken("");
+            setMode("onlineLanding");
+            setShowResultsPage(false);
+            setOnlineRoomId("");
+            setOnlineRoomCode("");
+            setOnlinePlayerId("");
+            setMatchNumber(1);
+          }}
+          onBuyNow={() => {
+            window.location.href = "https://shop.acrosticism.com";
+          }}
+        />
+      );
     }
 
     return (
       <PostMatchChoice
-  isHost={onlineIsHost}
-  roomId={onlineRoomId}
-  onNewMatch={async () => {
-    try {
-      await startNewMatch(onlineRoomId);
-      setShowResultsPage(false);
-    } catch (err: any) {
-      console.error("Failed to start new match:", err.message);
+        isHost={onlineIsHost}
+        roomId={onlineRoomId}
+        onNewMatch={async () => {
+          try {
+            await startNewMatch(onlineRoomId);
+            setShowResultsPage(false);
+          } catch (err: any) {
+            console.error("Failed to start new match:", err.message);
+          }
+        }}
+        onShowResults={() => setShowResultsPage(true)}
+      />
+    );
+  }
+  if (mode === "onlineRound" && currentRound && onlineRole !== "player") {
+    if (currentRound.phase === "theme_select") {
+      return (
+        <ThemeSelect
+          isJudge={false}
+          themes={themes}
+          onThemeChosen={() => { }}
+        />
+      );
     }
-  }}
-  onShowResults={() => setShowResultsPage(true)}
-/>
+
+    if (currentRound.phase === "writing") {
+      return (
+        <SpectatorWriting
+          roundId={currentRound.id}
+          roomId={onlineRoomId}
+          theme={currentRound.theme || ""}
+        />
+      );
+    }
+
+    if (currentRound.phase === "judging") {
+      return (
+        <SpectatorJudging
+          roundId={currentRound.id}
+          anonymousSubmissions={anonymousSubmissions}
+          theme={currentRound.theme || ""}
+        />
+      );
+    }
+
+    if (currentRound.phase === "reveal") {
+      return (
+        <RevealScreen
+          roomId={onlineRoomId}
+          roundId={currentRound.id}
+          isJudge={false}
+          isLastTurn={isLastTurn}
+          onNextRound={() => { }}
+        />
+      );
+    }
+
+    return (
+      <div
+        style={{
+          padding: "20px",
+          textAlign: "center",
+          fontFamily: "Nunito, sans-serif",
+          color: "#fff2cc",
+          textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+          minHeight: "100vh",
+        }}
+      >
+        <Header />
+        <h2>Acrosticizing in progress... You will see the winner(s) shortly.</h2>
+      </div>
     );
   }
   if (mode === "onlineRound" && currentRound) {
@@ -749,7 +836,7 @@ useEffect(() => {
       );
     }
 
-if (currentRound.phase === "writing") {
+    if (currentRound.phase === "writing") {
       return (
         <WritingPhaseOnline
           roundId={currentRound.id}
@@ -843,52 +930,52 @@ if (currentRound.phase === "writing") {
   // Phase rendering
   if (phase === "setup") {
     return (
-<div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc"}}>
+      <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc" }}>
         <Header />
         <h1 style={{
-  textAlign: "center",
-  color: "#fff2cc",
-  fontFamily: "Nunito, sans-serif",
-  fontWeight: 700,
-  textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
-  padding: "12px",
-  borderRadius: "8px",
-  fontSize: "50px",
-}}>
-  Play Acrosticism With Friends!
-</h1>
+          textAlign: "center",
+          color: "#fff2cc",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: 700,
+          textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+          padding: "12px",
+          borderRadius: "8px",
+          fontSize: "50px",
+        }}>
+          Play Acrosticism With Friends!
+        </h1>
 
         <h2>Players</h2>
-{players.map((player, idx) => (
-  <div key={idx} style={{ marginBottom: "8px", display: "flex", gap: "8px" }}>
-    <input
-      type="text"
-      value={player}
-      onChange={(e) => updatePlayerName(idx, e.target.value)}
-      placeholder={`Player ${idx + 1} name`}
-      style={{
-        flex: 1,
-        padding: "8px",
-        borderRadius: "6px",
-        border: "1px solid #ccc",
-      }}
-    />
-    <button
-      onClick={() => setPlayers(players.filter((_, i) => i !== idx))}
-      style={{
-        padding: "8px 12px",
-        borderRadius: "6px",
-        background: "#ff4444",
-        color: "white",
-        fontWeight: "bold",
-        cursor: "pointer",
-        border: "none",
-      }}
-    >
-      ✕
-    </button>
-  </div>
-))}
+        {players.map((player, idx) => (
+          <div key={idx} style={{ marginBottom: "8px", display: "flex", gap: "8px" }}>
+            <input
+              type="text"
+              value={player}
+              onChange={(e) => updatePlayerName(idx, e.target.value)}
+              placeholder={`Player ${idx + 1} name`}
+              style={{
+                flex: 1,
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+              }}
+            />
+            <button
+              onClick={() => setPlayers(players.filter((_, i) => i !== idx))}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                background: "#ff4444",
+                color: "white",
+                fontWeight: "bold",
+                cursor: "pointer",
+                border: "none",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
         <button
           onClick={addPlayer}
           disabled={players.length >= 6}
@@ -966,7 +1053,7 @@ if (currentRound.phase === "writing") {
         >
           Start Game
         </button>
-<button
+        <button
           onClick={() => setMode("trueHome")}
           style={{
             marginTop: "20px",
@@ -979,12 +1066,12 @@ if (currentRound.phase === "writing") {
             border: "none",
           }}
         >
-         Go Back
+          Go Back
         </button>
       </div>
     );
   }
-  
+
   if (phase === "start") {
     return (
       <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
