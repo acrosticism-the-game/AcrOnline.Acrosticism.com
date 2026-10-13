@@ -88,7 +88,7 @@ export default function AcrOnline() {
   const [showResultsPage, setShowResultsPage] = useState(false);
   const [restoring, setRestoring] = useState(true);
   const [onlineRole, setOnlineRole] = useState<Role>("player");
-  const [hostToken, setHostToken] = useState("");
+  const [, setHostToken] = useState("");
   const [initialCode, setInitialCode] = useState("");
   const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
 
