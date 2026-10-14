@@ -5,7 +5,7 @@ import OnlineLanding from "./OnlineLanding";
 import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 import WaitingLobby from "./WaitingLobby";
-import { startMatch } from "./roomUtils";
+import { startMatch, closeRoom, leaveRoom } from "./roomUtils";
 import { chooseTheme, checkAndAdvanceToJudging, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch, forceAdvanceToJudging, chooseTieWinners, declareLie } from "./roomUtils";
 import ThemeSelect from "./ThemeSelect";
 import WritingPhaseOnline from "./WritingPhaseOnline";
@@ -238,26 +238,67 @@ export default function AcrOnline() {
     };
     restore();
   }, []);
+  // If the host closes the room while others are waiting, send them home
+  useEffect(() => {
+    if (roomStatus === "closed" && mode === "onlineLobby" && !onlineIsHost) {
+      clearSession();
+      setRoomStatus("waiting");
+      setOnlineRoomId("");
+      setOnlineRoomCode("");
+      setOnlinePlayerId("");
+      setOnlineRole("player");
+      setCurrentRound(null);
+      setMode("onlineLanding");
+      window.alert("The host closed this room.");
+    }
+  }, [roomStatus, mode, onlineIsHost]);
+
   // Fetch words and themes from Google Sheets
   useEffect(() => {
-    const fetchData = async () => {
+    const WORDS_KEY = "acr_words_cache";
+    const THEMES_KEY = "acr_themes_cache";
+
+    const readCache = (key: string): string[] => {
       try {
-        const wordsRes = await fetch(WORDS_CSV);
-        const wordsText = await wordsRes.text();
-        const parsedWords = parseCSV(wordsText);
-
-        const themesRes = await fetch(THEMES_CSV);
-        const themesText = await themesRes.text();
-        const parsedThemes = parseCSV(themesText);
-
-        setWords(parsedWords);
-        setThemes(parsedThemes);
-      } catch (err) {
-        console.error("Error loading Google Sheets:", err);
+        const raw = localStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
       }
     };
 
-    fetchData();
+    // Use the saved copy right away, then refresh from Google in the background
+    const cachedWords = readCache(WORDS_KEY);
+    const cachedThemes = readCache(THEMES_KEY);
+    if (cachedWords.length > 0) setWords(cachedWords);
+    if (cachedThemes.length > 0) setThemes(cachedThemes);
+
+    const load = async (
+      url: string,
+      key: string,
+      apply: (rows: string[]) => void
+    ) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (/^\s*<(!doctype|html)/i.test(text)) {
+          throw new Error("Got a web page instead of the list");
+        }
+        const rows = parseCSV(text);
+        if (rows.length < 5) throw new Error("Too few rows in the list");
+        apply(rows);
+        try {
+          localStorage.setItem(key, JSON.stringify(rows));
+        } catch {}
+      } catch (err) {
+        console.error("Could not refresh from Google Sheets, using the saved copy:", err);
+      }
+    };
+
+    load(WORDS_CSV, WORDS_KEY, setWords);
+    load(THEMES_CSV, THEMES_KEY, setThemes);
   }, []);
 
   // Timer logic
@@ -715,6 +756,28 @@ export default function AcrOnline() {
           } catch (err: any) {
             console.error("Failed to start match:", err.message);
           }
+        }}
+        onBack={async () => {
+          const wasHost = onlineIsHost;
+          try {
+            if (wasHost) {
+              await closeRoom(onlineRoomId);
+            } else if (onlineRole === "player") {
+              await leaveRoom(onlinePlayerId);
+            }
+          } catch (err: any) {
+            console.error("Failed to leave room:", err.message);
+          }
+          clearSession();
+          setRoomStatus("waiting");
+          setOnlineRoomId("");
+          setOnlineRoomCode("");
+          setOnlinePlayerId("");
+          setOnlineIsHost(false);
+          setOnlineRole("player");
+          setHostToken("");
+          setCurrentRound(null);
+          setMode(wasHost ? "onlineCreate" : "onlineLanding");
         }}
       />
     );

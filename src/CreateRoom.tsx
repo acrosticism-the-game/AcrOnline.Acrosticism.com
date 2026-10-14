@@ -36,6 +36,9 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
 
     try {
       const candidateWords = filterRoomCodeWords(words);
+      if (candidateWords.length === 0) {
+        throw new Error("The word list did not load. Refresh the page and try again.");
+      }
       console.log("words:", words.length, "usable codes:", candidateWords.length, "first few:", words.slice(0, 3));
       const { room, player, hostToken } = await createRoom(
         hostName.trim(),

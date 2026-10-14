@@ -421,6 +421,25 @@ export const chooseTieWinners = async (roundId: string, submissionIds: string[])
   if (roundError) throw roundError;
 };
 
+export const leaveRoom = async (playerId: string) => {
+  const { error } = await supabase
+    .from("room_players")
+    .delete()
+    .eq("id", playerId);
+
+  if (error) throw error;
+};
+
+export const closeRoom = async (roomId: string) => {
+  const { error } = await supabase
+    .from("rooms")
+    .update({ status: "closed" })
+    .eq("id", roomId)
+    .eq("status", "waiting");
+
+  if (error) throw error;
+};
+
 export const declareLie = async (roundId: string) => {
   const { error } = await supabase
     .from("rounds")

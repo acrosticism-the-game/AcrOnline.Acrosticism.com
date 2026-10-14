@@ -42,6 +42,7 @@ export default function JoinRoom({ onRoomJoined, onBack, initialCode }: JoinRoom
           .from("rooms")
           .select("id, room_code")
           .eq("room_code", roomCode.trim().toUpperCase())
+          .neq("status", "closed")
           .maybeSingle();
         if (!room) throw new Error("Room not found. Check the code and try again.");
         onRoomJoined(room.id, room.room_code, "", "", "spectator");

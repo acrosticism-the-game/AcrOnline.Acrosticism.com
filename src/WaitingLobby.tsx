@@ -19,6 +19,7 @@ type WaitingLobbyProps = {
   role: Role;
   spectatorCount: number;
   onStartMatch: () => void;
+  onBack: () => void;
 };
 
 export default function WaitingLobby({
@@ -29,6 +30,7 @@ export default function WaitingLobby({
   role,
   spectatorCount,
   onStartMatch,
+  onBack,
 }: WaitingLobbyProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState("");
@@ -50,6 +52,7 @@ export default function WaitingLobby({
     };
 
     fetchPlayers();
+    const poll = setInterval(fetchPlayers, 4000);
 
     const channel = supabase
       .channel(`room-players-${roomId}`)
@@ -63,6 +66,7 @@ export default function WaitingLobby({
       .subscribe();
 
     return () => {
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, [roomId]);
@@ -175,6 +179,23 @@ export default function WaitingLobby({
       ) : (
         <div style={{ fontSize: "1rem" }}>Waiting for host to start the game...</div>
       )}
+
+      <button
+        onClick={onBack}
+        style={{
+          display: "block",
+          margin: "24px auto 0",
+          padding: "12px 24px",
+          borderRadius: "8px",
+          background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
+          fontWeight: "bold",
+          fontSize: "1.1rem",
+          cursor: "pointer",
+          border: "none",
+        }}
+      >
+        {isHost ? "Back" : "Leave"}
+      </button>
     </div>
   );
 }
