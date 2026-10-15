@@ -689,7 +689,7 @@ export default function AcrOnline() {
     mode === "onlineRound" &&
     currentRound !== null &&
     roomStatus !== "match_complete" &&
-    ["theme_select", "judging", "reveal"].includes(currentRound.phase);
+    ["theme_select", "writing", "judging", "reveal"].includes(currentRound.phase);
 
   const skipJudge = async () => {
     if (!currentRound) return;
