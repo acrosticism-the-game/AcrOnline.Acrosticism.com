@@ -90,6 +90,7 @@ export default function AcrOnline() {
   const [onlineRole, setOnlineRole] = useState<Role>("player");
   const [, setHostToken] = useState("");
   const [initialCode, setInitialCode] = useState("");
+  const [notice, setNotice] = useState("");
   const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
 
   useEffect(() => {
@@ -249,7 +250,7 @@ export default function AcrOnline() {
       setOnlineRole("player");
       setCurrentRound(null);
       setMode("onlineLanding");
-      window.alert("The host closed this room.");
+      setNotice("The host closed this room.");
     }
   }, [roomStatus, mode, onlineIsHost]);
 
@@ -696,11 +697,54 @@ export default function AcrOnline() {
   // Online mode rendering
   if (mode === "onlineLanding") {
     return (
-      <OnlineLanding
-        onSelectCreate={() => setMode("onlineCreate")}
-        onSelectJoin={() => setMode("onlineJoin")}
-        onBackToHome={() => setMode("trueHome")}
-      />
+      <>
+        {notice && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              padding: "14px 20px",
+              background: "#ff4444",
+              color: "#ffffff",
+              fontFamily: "Nunito, sans-serif",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            {notice}
+            <button
+              onClick={() => setNotice("")}
+              style={{
+                marginLeft: "16px",
+                padding: "4px 12px",
+                borderRadius: "6px",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        )}
+        <OnlineLanding
+          onSelectCreate={() => {
+            setNotice("");
+            setMode("onlineCreate");
+          }}
+          onSelectJoin={() => {
+            setNotice("");
+            setMode("onlineJoin");
+          }}
+          onBackToHome={() => {
+            setNotice("");
+            setMode("trueHome");
+          }}
+        />
+      </>
     );
   }
 
@@ -778,6 +822,17 @@ export default function AcrOnline() {
           setHostToken("");
           setCurrentRound(null);
           setMode(wasHost ? "onlineCreate" : "onlineLanding");
+        }}
+        onRemoved={() => {
+          clearSession();
+          setRoomStatus("waiting");
+          setOnlineRoomId("");
+          setOnlineRoomCode("");
+          setOnlinePlayerId("");
+          setOnlineRole("player");
+          setCurrentRound(null);
+          setMode("onlineLanding");
+          setNotice("The host removed you from the room.");
         }}
       />
     );

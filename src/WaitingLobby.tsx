@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
+import { leaveRoom } from "./roomUtils";
 import { Role } from "./session";
 
 type Player = {
@@ -20,6 +21,7 @@ type WaitingLobbyProps = {
   spectatorCount: number;
   onStartMatch: () => void;
   onBack: () => void;
+  onRemoved: () => void;
 };
 
 export default function WaitingLobby({
@@ -31,11 +33,14 @@ export default function WaitingLobby({
   spectatorCount,
   onStartMatch,
   onBack,
+  onRemoved,
 }: WaitingLobbyProps) {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const leavingRef = useRef(false);
 
-  // Fetch current players, then subscribe to changes
+  // Fetch current players, refresh every few seconds, and listen for changes
   useEffect(() => {
     const fetchPlayers = async () => {
       const { data, error } = await supabase
@@ -48,6 +53,7 @@ export default function WaitingLobby({
         setError(error.message);
       } else if (data) {
         setPlayers(data);
+        setLoaded(true);
       }
     };
 
@@ -72,6 +78,20 @@ export default function WaitingLobby({
   }, [roomId]);
 
   const canStart = players.length >= 3 && players.length <= 7;
+
+  // If the host removed this player, send them back home
+  useEffect(() => {
+    if (
+      loaded &&
+      !leavingRef.current &&
+      role === "player" &&
+      !isHost &&
+      !players.some((p) => p.id === playerId)
+    ) {
+      onRemoved();
+    }
+  }, [loaded, players, role, isHost, playerId, onRemoved]);
+
   const isProjector = role === "host-spectator";
   const joinLink = `${window.location.origin}/?room=${encodeURIComponent(roomCode)}`;
   const spectatorLine =
@@ -140,6 +160,32 @@ export default function WaitingLobby({
             style={{ fontSize: isProjector ? "1.6rem" : "1.1rem", marginBottom: "6px" }}
           >
             {p.player_name} {p.id === playerId ? "(you)" : ""}
+            {isHost && p.id !== playerId && (
+              <button
+                onClick={async () => {
+                  try {
+                    await leaveRoom(p.id);
+                    setPlayers((prev) => prev.filter((x) => x.id !== p.id));
+                  } catch (err: any) {
+                    setError(err.message || "Could not remove that player.");
+                  }
+                }}
+                title="Remove player"
+                style={{
+                  marginLeft: "10px",
+                  padding: "2px 8px",
+                  borderRadius: "6px",
+                  background: "#ff4444",
+                  color: "white",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  border: "none",
+                  textShadow: "none",
+                }}
+              >
+                ✕
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -181,7 +227,10 @@ export default function WaitingLobby({
       )}
 
       <button
-        onClick={onBack}
+        onClick={() => {
+          leavingRef.current = true;
+          onBack();
+        }}
         style={{
           display: "block",
           margin: "24px auto 0",
