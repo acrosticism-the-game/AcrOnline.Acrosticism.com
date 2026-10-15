@@ -292,7 +292,7 @@ export default function AcrOnline() {
         apply(rows);
         try {
           localStorage.setItem(key, JSON.stringify(rows));
-        } catch {}
+        } catch { }
       } catch (err) {
         console.error("Could not refresh from Google Sheets, using the saved copy:", err);
       }
@@ -684,543 +684,596 @@ export default function AcrOnline() {
     );
   };
 
-  if (restoring) return null;
-  if (mode === "trueHome") {
-    return (
-      <TrueHome
-        onSelectPassAndPlay={() => setMode("local")}
-        onSelectOnline={() => setMode("onlineLanding")}
-      />
-    );
-  }
+    const showHostTools =
+    onlineIsHost &&
+    mode === "onlineRound" &&
+    currentRound !== null &&
+    roomStatus !== "match_complete" &&
+    ["theme_select", "judging", "reveal"].includes(currentRound.phase);
 
-  // Online mode rendering
-  if (mode === "onlineLanding") {
-    return (
-      <>
-        {notice && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              zIndex: 1000,
-              padding: "14px 20px",
-              background: "#ff4444",
-              color: "#ffffff",
-              fontFamily: "Nunito, sans-serif",
-              fontWeight: "bold",
-              textAlign: "center",
-            }}
-          >
-            {notice}
-            <button
-              onClick={() => setNotice("")}
+  const skipJudge = async () => {
+    if (!currentRound) return;
+    if (!window.confirm("Skip the current judge and move to the next turn?")) return;
+    try {
+      await advanceToNextRound(onlineRoomId, currentRound.judge_player_id);
+    } catch (err: any) {
+      console.error("Failed to skip judge:", err.message);
+    }
+  };
+
+  const hostTools = showHostTools ? (
+    <div
+      style={{
+        position: "fixed",
+        bottom: "12px",
+        right: "12px",
+        zIndex: 1000,
+      }}
+    >
+      <button
+        onClick={skipJudge}
+        style={{
+          padding: "8px 14px",
+          borderRadius: "8px",
+          border: "none",
+          background: "rgba(0,0,0,0.55)",
+          color: "#fff2cc",
+          fontFamily: "Nunito, sans-serif",
+          fontWeight: "bold",
+          cursor: "pointer",
+        }}
+      >
+        Host: Skip Judge
+      </button>
+    </div>
+  ) : null;
+
+  const renderScreen = () => {
+    if (restoring) return null;
+    if (mode === "trueHome") {
+      return (
+        <TrueHome
+          onSelectPassAndPlay={() => setMode("local")}
+          onSelectOnline={() => setMode("onlineLanding")}
+        />
+      );
+    }
+
+    // Online mode rendering
+    if (mode === "onlineLanding") {
+      return (
+        <>
+          {notice && (
+            <div
               style={{
-                marginLeft: "16px",
-                padding: "4px 12px",
-                borderRadius: "6px",
-                border: "none",
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1000,
+                padding: "14px 20px",
+                background: "#ff4444",
+                color: "#ffffff",
+                fontFamily: "Nunito, sans-serif",
                 fontWeight: "bold",
-                cursor: "pointer",
+                textAlign: "center",
               }}
             >
-              OK
-            </button>
-          </div>
-        )}
-        <OnlineLanding
-          onSelectCreate={() => {
-            setNotice("");
-            setMode("onlineCreate");
-          }}
-          onSelectJoin={() => {
-            setNotice("");
-            setMode("onlineJoin");
-          }}
-          onBackToHome={() => {
-            setNotice("");
-            setMode("trueHome");
-          }}
-        />
-      </>
-    );
-  }
+              {notice}
+              <button
+                onClick={() => setNotice("")}
+                style={{
+                  marginLeft: "16px",
+                  padding: "4px 12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                OK
+              </button>
+            </div>
+          )}
+          <OnlineLanding
+            onSelectCreate={() => {
+              setNotice("");
+              setMode("onlineCreate");
+            }}
+            onSelectJoin={() => {
+              setNotice("");
+              setMode("onlineJoin");
+            }}
+            onBackToHome={() => {
+              setNotice("");
+              setMode("trueHome");
+            }}
+          />
+        </>
+      );
+    }
 
-  if (mode === "onlineCreate") {
-    return (
-      <CreateRoom
-        words={words}
-        onRoomCreated={(roomId, roomCode, playerId, playerName, role, token) => {
-          saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
-          setOnlineRoomId(roomId);
-          setOnlineRoomCode(roomCode);
-          setOnlinePlayerId(playerId);
-          setOnlineIsHost(true);
-          setOnlineRole(role);
-          setHostToken(token);
-          setMode("onlineLobby");
-        }}
-        onBack={() => setMode("onlineLanding")}
-      />
-    );
-  }
-
-  if (mode === "onlineJoin") {
-    return (
-      <JoinRoom
-        initialCode={initialCode}
-        onRoomJoined={(roomId, roomCode, playerId, playerName, role) => {
-          saveSession({ roomId, roomCode, playerId, isHost: false, role });
-          setOnlineRoomId(roomId);
-          setOnlineRoomCode(roomCode);
-          setOnlinePlayerId(playerId);
-          setOnlineIsHost(false);
-          setOnlineRole(role);
-          setMode("onlineLobby");
-        }}
-        onBack={() => setMode("onlineLanding")}
-      />
-    );
-  }
-
-  if (mode === "onlineLobby") {
-    return (
-      <WaitingLobby
-        roomId={onlineRoomId}
-        roomCode={onlineRoomCode}
-        playerId={onlinePlayerId}
-        isHost={onlineIsHost}
-        role={onlineRole}
-        spectatorCount={spectatorCount}
-        onStartMatch={async () => {
-          try {
-            await startMatch(onlineRoomId);
-          } catch (err: any) {
-            console.error("Failed to start match:", err.message);
-          }
-        }}
-        onBack={async () => {
-          const wasHost = onlineIsHost;
-          try {
-            if (wasHost) {
-              await closeRoom(onlineRoomId);
-            } else if (onlineRole === "player") {
-              await leaveRoom(onlinePlayerId);
-            }
-          } catch (err: any) {
-            console.error("Failed to leave room:", err.message);
-          }
-          clearSession();
-          setRoomStatus("waiting");
-          setOnlineRoomId("");
-          setOnlineRoomCode("");
-          setOnlinePlayerId("");
-          setOnlineIsHost(false);
-          setOnlineRole("player");
-          setHostToken("");
-          setCurrentRound(null);
-          setMode(wasHost ? "onlineCreate" : "onlineLanding");
-        }}
-        onRemoved={() => {
-          clearSession();
-          setRoomStatus("waiting");
-          setOnlineRoomId("");
-          setOnlineRoomCode("");
-          setOnlinePlayerId("");
-          setOnlineRole("player");
-          setCurrentRound(null);
-          setMode("onlineLanding");
-          setNotice("The host removed you from the room.");
-        }}
-      />
-    );
-  }
-  if (mode === "onlineRound" && roomStatus === "match_complete") {
-    if (matchNumber >= 3 || showResultsPage) {
+    if (mode === "onlineCreate") {
       return (
-        <MatchComplete
+        <CreateRoom
+          words={words}
+          onRoomCreated={(roomId, roomCode, playerId, playerName, role, token) => {
+            saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
+            setOnlineRoomId(roomId);
+            setOnlineRoomCode(roomCode);
+            setOnlinePlayerId(playerId);
+            setOnlineIsHost(true);
+            setOnlineRole(role);
+            setHostToken(token);
+            setMode("onlineLobby");
+          }}
+          onBack={() => setMode("onlineLanding")}
+        />
+      );
+    }
+
+    if (mode === "onlineJoin") {
+      return (
+        <JoinRoom
+          initialCode={initialCode}
+          onRoomJoined={(roomId, roomCode, playerId, playerName, role) => {
+            saveSession({ roomId, roomCode, playerId, isHost: false, role });
+            setOnlineRoomId(roomId);
+            setOnlineRoomCode(roomCode);
+            setOnlinePlayerId(playerId);
+            setOnlineIsHost(false);
+            setOnlineRole(role);
+            setMode("onlineLobby");
+          }}
+          onBack={() => setMode("onlineLanding")}
+        />
+      );
+    }
+
+    if (mode === "onlineLobby") {
+      return (
+        <WaitingLobby
           roomId={onlineRoomId}
-          onPlayAgain={() => {
+          roomCode={onlineRoomCode}
+          playerId={onlinePlayerId}
+          isHost={onlineIsHost}
+          role={onlineRole}
+          spectatorCount={spectatorCount}
+          onStartMatch={async () => {
+            try {
+              await startMatch(onlineRoomId);
+            } catch (err: any) {
+              console.error("Failed to start match:", err.message);
+            }
+          }}
+          onBack={async () => {
+            const wasHost = onlineIsHost;
+            try {
+              if (wasHost) {
+                await closeRoom(onlineRoomId);
+              } else if (onlineRole === "player") {
+                await leaveRoom(onlinePlayerId);
+              }
+            } catch (err: any) {
+              console.error("Failed to leave room:", err.message);
+            }
             clearSession();
-            setOnlineRole("player");
-            setHostToken("");
-            setMode("onlineLanding");
-            setShowResultsPage(false);
+            setRoomStatus("waiting");
             setOnlineRoomId("");
             setOnlineRoomCode("");
             setOnlinePlayerId("");
-            setMatchNumber(1);
+            setOnlineIsHost(false);
+            setOnlineRole("player");
+            setHostToken("");
+            setCurrentRound(null);
+            setMode(wasHost ? "onlineCreate" : "onlineLanding");
           }}
-          onBuyNow={() => {
-            window.location.href = "https://shop.acrosticism.com";
+          onRemoved={() => {
+            clearSession();
+            setRoomStatus("waiting");
+            setOnlineRoomId("");
+            setOnlineRoomCode("");
+            setOnlinePlayerId("");
+            setOnlineRole("player");
+            setCurrentRound(null);
+            setMode("onlineLanding");
+            setNotice("The host removed you from the room.");
           }}
         />
       );
     }
+    if (mode === "onlineRound" && roomStatus === "match_complete") {
+      if (matchNumber >= 3 || showResultsPage) {
+        return (
+          <MatchComplete
+            roomId={onlineRoomId}
+            onPlayAgain={() => {
+              clearSession();
+              setOnlineRole("player");
+              setHostToken("");
+              setMode("onlineLanding");
+              setShowResultsPage(false);
+              setOnlineRoomId("");
+              setOnlineRoomCode("");
+              setOnlinePlayerId("");
+              setMatchNumber(1);
+            }}
+            onBuyNow={() => {
+              window.location.href = "https://shop.acrosticism.com";
+            }}
+          />
+        );
+      }
 
-    return (
-      <PostMatchChoice
-        isHost={onlineIsHost}
-        roomId={onlineRoomId}
-        onNewMatch={async () => {
-          try {
-            await startNewMatch(onlineRoomId);
-            setShowResultsPage(false);
-          } catch (err: any) {
-            console.error("Failed to start new match:", err.message);
-          }
-        }}
-        onShowResults={() => setShowResultsPage(true)}
-      />
-    );
-  }
-  if (mode === "onlineRound" && currentRound && onlineRole !== "player") {
-    if (currentRound.phase === "theme_select") {
       return (
-        <ThemeSelect
-          isJudge={false}
-          themes={themes}
-          onThemeChosen={() => { }}
-        />
-      );
-    }
-
-    if (currentRound.phase === "writing") {
-      return (
-        <SpectatorWriting
-          roundId={currentRound.id}
+        <PostMatchChoice
+          isHost={onlineIsHost}
           roomId={onlineRoomId}
-          theme={currentRound.theme || ""}
+          onNewMatch={async () => {
+            try {
+              await startNewMatch(onlineRoomId);
+              setShowResultsPage(false);
+            } catch (err: any) {
+              console.error("Failed to start new match:", err.message);
+            }
+          }}
+          onShowResults={() => setShowResultsPage(true)}
         />
       );
     }
+    if (mode === "onlineRound" && currentRound && onlineRole !== "player") {
+      if (currentRound.phase === "theme_select") {
+        return (
+          <ThemeSelect
+            isJudge={false}
+            themes={themes}
+            onThemeChosen={() => { }}
+          />
+        );
+      }
 
-    if (currentRound.phase === "judging") {
+      if (currentRound.phase === "writing") {
+        return (
+          <SpectatorWriting
+            roundId={currentRound.id}
+            roomId={onlineRoomId}
+            theme={currentRound.theme || ""}
+          />
+        );
+      }
+
+      if (currentRound.phase === "judging") {
+        return (
+          <SpectatorJudging
+            roundId={currentRound.id}
+            anonymousSubmissions={anonymousSubmissions}
+            theme={currentRound.theme || ""}
+          />
+        );
+      }
+
+      if (currentRound.phase === "reveal") {
+        return (
+          <RevealScreen
+            roomId={onlineRoomId}
+            roundId={currentRound.id}
+            isJudge={false}
+            isLastTurn={isLastTurn}
+            onNextRound={() => { }}
+          />
+        );
+      }
+
       return (
-        <SpectatorJudging
-          roundId={currentRound.id}
-          anonymousSubmissions={anonymousSubmissions}
-          theme={currentRound.theme || ""}
-        />
-      );
-    }
-
-    if (currentRound.phase === "reveal") {
-      return (
-        <RevealScreen
-          roomId={onlineRoomId}
-          roundId={currentRound.id}
-          isJudge={false}
-          isLastTurn={isLastTurn}
-          onNextRound={() => { }}
-        />
-      );
-    }
-
-    return (
-      <div
-        style={{
-          padding: "20px",
-          textAlign: "center",
-          fontFamily: "Nunito, sans-serif",
-          color: "#fff2cc",
-          textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
-          minHeight: "100vh",
-        }}
-      >
-        <Header />
-        <h2>Acrosticizing in progress... You will see the winner(s) shortly.</h2>
-      </div>
-    );
-  }
-  if (mode === "onlineRound" && currentRound) {
-    const isJudge = currentRound.judge_player_id === onlinePlayerId;
-
-    if (currentRound.phase === "theme_select") {
-      return (
-        <ThemeSelect
-          isJudge={isJudge}
-          themes={themes}
-          onThemeChosen={async (theme) => {
-            try {
-              await chooseTheme(currentRound.id, theme);
-            } catch (err: any) {
-              console.error("Failed to choose theme:", err.message);
-            }
-          }}
-        />
-      );
-    }
-
-    if (currentRound.phase === "writing") {
-      return (
-        <WritingPhaseOnline
-          roundId={currentRound.id}
-          playerId={onlinePlayerId}
-          isJudge={isJudge}
-          theme={currentRound.theme || ""}
-          words={words}
-          onSubmitted={async () => {
-            try {
-              await checkAndAdvanceToJudging(onlineRoomId, currentRound.id, currentRound.judge_player_id);
-            } catch (err: any) {
-              console.error("Failed to check/advance to judging:", err.message);
-            }
-          }}
-          onForceAdvance={async () => {
-            try {
-              await forceAdvanceToJudging(currentRound.id);
-            } catch (err: any) {
-              console.error("Failed to force advance:", err.message);
-            }
-          }}
-        />
-      );
-    }
-
-    if (currentRound.phase === "judging") {
-      return (
-        <JudgingScreen
-          roundId={currentRound.id}
-          isJudge={isJudge}
-          anonymousSubmissions={anonymousSubmissions}
-          theme={currentRound.theme || ""}
-          onWinnerChosen={async (submissionId) => {
-            try {
-              const { data: sub } = await supabase
-                .from("submissions")
-                .select("player_id")
-                .eq("id", submissionId)
-                .single();
-
-              if (sub) {
-                await chooseWinner(currentRound.id, submissionId, sub.player_id);
-              }
-            } catch (err: any) {
-              console.error("Failed to choose winner:", err.message);
-            }
-          }}
-          onTieChosen={async (submissionIds) => {
-            try {
-              await chooseTieWinners(currentRound.id, submissionIds);
-            } catch (err: any) {
-              console.error("Failed to choose tie winners:", err.message);
-            }
-          }}
-          onLie={async () => {
-            try {
-              await declareLie(currentRound.id);
-            } catch (err: any) {
-              console.error("Failed to declare lie:", err.message);
-            }
-          }}
-        />
-      );
-    }
-
-    if (currentRound.phase === "reveal") {
-      return (
-        <RevealScreen
-          roomId={onlineRoomId}
-          roundId={currentRound.id}
-          isJudge={isJudge}
-          isLastTurn={isLastTurn}
-          onNextRound={async () => {
-            try {
-              await advanceToNextRound(onlineRoomId, currentRound.judge_player_id);
-            } catch (err: any) {
-              console.error("Failed to advance to next round:", err.message);
-            }
-          }}
-        />
-      );
-    }
-
-    return (
-      <div style={{ color: "#fff2cc", padding: "20px", textAlign: "center" }}>
-        Turn phase "{currentRound.phase}" not yet built.
-      </div>
-    );
-  }
-
-  // Phase rendering
-  if (phase === "setup") {
-    return (
-      <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc" }}>
-        <Header />
-        <h1 style={{
-          textAlign: "center",
-          color: "#fff2cc",
-          fontFamily: "Nunito, sans-serif",
-          fontWeight: 700,
-          textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
-          padding: "12px",
-          borderRadius: "8px",
-          fontSize: "50px",
-        }}>
-          Play Acrosticism With Friends!
-        </h1>
-
-        <h2>Players</h2>
-        {players.map((player, idx) => (
-          <div key={idx} style={{ marginBottom: "8px", display: "flex", gap: "8px" }}>
-            <input
-              type="text"
-              value={player}
-              onChange={(e) => updatePlayerName(idx, e.target.value)}
-              placeholder={`Player ${idx + 1} name`}
-              style={{
-                flex: 1,
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-            <button
-              onClick={() => setPlayers(players.filter((_, i) => i !== idx))}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                background: "#ff4444",
-                color: "white",
-                fontWeight: "bold",
-                cursor: "pointer",
-                border: "none",
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        <button
-          onClick={addPlayer}
-          disabled={players.length >= 6}
+        <div
           style={{
-            marginTop: "10px",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            cursor: players.length >= 6 ? "not-allowed" : "pointer",
-            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+            padding: "20px",
+            textAlign: "center",
+            fontFamily: "Nunito, sans-serif",
+            color: "#fff2cc",
+            textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+            minHeight: "100vh",
           }}
         >
-          Add Player
-        </button>
+          <Header />
+          <h2>Acrosticizing in progress... You will see the winner(s) shortly.</h2>
+        </div>
+      );
+    }
+    if (mode === "onlineRound" && currentRound) {
+      const isJudge = currentRound.judge_player_id === onlinePlayerId;
 
-        <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <h2>Theme</h2>
-          <div style={{ marginBottom: "8px" }}>
-            <label>
-              <input
-                type="radio"
-                value="random"
-                checked={themeMode === "random"}
-                onChange={() => setThemeMode("random")}
-                style={{ marginRight: "8px" }}
-              />
-              Random Theme
-            </label>
-          </div>
-          <div>
-            <label>
-              <input
-                type="radio"
-                value="custom"
-                checked={themeMode === "custom"}
-                onChange={() => setThemeMode("custom")}
-                style={{ marginRight: "8px" }}
-              />
-              Custom Theme
-            </label>
-          </div>
+      if (currentRound.phase === "theme_select") {
+        return (
+          <ThemeSelect
+            isJudge={isJudge}
+            themes={themes}
+            onThemeChosen={async (theme) => {
+              try {
+                await chooseTheme(currentRound.id, theme);
+              } catch (err: any) {
+                console.error("Failed to choose theme:", err.message);
+              }
+            }}
+          />
+        );
+      }
 
-          {themeMode === "custom" && (
-            <div style={{ marginTop: "10px", textAlign: "center" }}>
+      if (currentRound.phase === "writing") {
+        return (
+          <WritingPhaseOnline
+            roundId={currentRound.id}
+            playerId={onlinePlayerId}
+            isJudge={isJudge}
+            theme={currentRound.theme || ""}
+            words={words}
+            onSubmitted={async () => {
+              try {
+                await checkAndAdvanceToJudging(onlineRoomId, currentRound.id, currentRound.judge_player_id);
+              } catch (err: any) {
+                console.error("Failed to check/advance to judging:", err.message);
+              }
+            }}
+            onForceAdvance={async () => {
+              try {
+                await forceAdvanceToJudging(currentRound.id);
+              } catch (err: any) {
+                console.error("Failed to force advance:", err.message);
+              }
+            }}
+          />
+        );
+      }
+
+      if (currentRound.phase === "judging") {
+        return (
+          <JudgingScreen
+            roundId={currentRound.id}
+            isJudge={isJudge}
+            anonymousSubmissions={anonymousSubmissions}
+            theme={currentRound.theme || ""}
+            onWinnerChosen={async (submissionId) => {
+              try {
+                const { data: sub } = await supabase
+                  .from("submissions")
+                  .select("player_id")
+                  .eq("id", submissionId)
+                  .single();
+
+                if (sub) {
+                  await chooseWinner(currentRound.id, submissionId, sub.player_id);
+                }
+              } catch (err: any) {
+                console.error("Failed to choose winner:", err.message);
+              }
+            }}
+            onTieChosen={async (submissionIds) => {
+              try {
+                await chooseTieWinners(currentRound.id, submissionIds);
+              } catch (err: any) {
+                console.error("Failed to choose tie winners:", err.message);
+              }
+            }}
+            onLie={async () => {
+              try {
+                await declareLie(currentRound.id);
+              } catch (err: any) {
+                console.error("Failed to declare lie:", err.message);
+              }
+            }}
+          />
+        );
+      }
+
+      if (currentRound.phase === "reveal") {
+        return (
+          <RevealScreen
+            roomId={onlineRoomId}
+            roundId={currentRound.id}
+            isJudge={isJudge}
+            isLastTurn={isLastTurn}
+            onNextRound={async () => {
+              try {
+                await advanceToNextRound(onlineRoomId, currentRound.judge_player_id);
+              } catch (err: any) {
+                console.error("Failed to advance to next round:", err.message);
+              }
+            }}
+          />
+        );
+      }
+
+      return (
+        <div style={{ color: "#fff2cc", padding: "20px", textAlign: "center" }}>
+          Turn phase "{currentRound.phase}" not yet built.
+        </div>
+      );
+    }
+
+    // Phase rendering
+    if (phase === "setup") {
+      return (
+        <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc" }}>
+          <Header />
+          <h1 style={{
+            textAlign: "center",
+            color: "#fff2cc",
+            fontFamily: "Nunito, sans-serif",
+            fontWeight: 700,
+            textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc",
+            padding: "12px",
+            borderRadius: "8px",
+            fontSize: "50px",
+          }}>
+            Play Acrosticism With Friends!
+          </h1>
+
+          <h2>Players</h2>
+          {players.map((player, idx) => (
+            <div key={idx} style={{ marginBottom: "8px", display: "flex", gap: "8px" }}>
               <input
                 type="text"
-                value={customTheme}
-                onChange={(e) => setCustomTheme(e.target.value)}
-                placeholder="Enter custom theme..."
+                value={player}
+                onChange={(e) => updatePlayerName(idx, e.target.value)}
+                placeholder={`Player ${idx + 1} name`}
                 style={{
-                  width: "100%",
+                  flex: 1,
                   padding: "8px",
                   borderRadius: "6px",
                   border: "1px solid #ccc",
                 }}
               />
+              <button
+                onClick={() => setPlayers(players.filter((_, i) => i !== idx))}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  background: "#ff4444",
+                  color: "white",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  border: "none",
+                }}
+              >
+                ✕
+              </button>
             </div>
-          )}
+          ))}
+          <button
+            onClick={addPlayer}
+            disabled={players.length >= 6}
+            style={{
+              marginTop: "10px",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              cursor: players.length >= 6 ? "not-allowed" : "pointer",
+              background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+            }}
+          >
+            Add Player
+          </button>
+
+          <div style={{ marginTop: "20px", textAlign: "center" }}>
+            <h2>Theme</h2>
+            <div style={{ marginBottom: "8px" }}>
+              <label>
+                <input
+                  type="radio"
+                  value="random"
+                  checked={themeMode === "random"}
+                  onChange={() => setThemeMode("random")}
+                  style={{ marginRight: "8px" }}
+                />
+                Random Theme
+              </label>
+            </div>
+            <div>
+              <label>
+                <input
+                  type="radio"
+                  value="custom"
+                  checked={themeMode === "custom"}
+                  onChange={() => setThemeMode("custom")}
+                  style={{ marginRight: "8px" }}
+                />
+                Custom Theme
+              </label>
+            </div>
+
+            {themeMode === "custom" && (
+              <div style={{ marginTop: "10px", textAlign: "center" }}>
+                <input
+                  type="text"
+                  value={customTheme}
+                  onChange={(e) => setCustomTheme(e.target.value)}
+                  placeholder="Enter custom theme..."
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={beginStartSetup}
+            disabled={!canContinueFromSetup}
+            style={{
+              marginTop: "20px",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+              textShadow: canContinueFromSetup
+                ? "0 0 20px #1155cc, 0 0 40px #1155cc"
+                : "none",
+              fontWeight: "bold",
+              cursor: canContinueFromSetup ? "pointer" : "not-allowed",
+              border: "none",
+            }}
+          >
+            Start Game
+          </button>
+          <button
+            onClick={() => setMode("trueHome")}
+            style={{
+              marginTop: "20px",
+              marginLeft: "10px",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
+              fontWeight: "bold",
+              cursor: "pointer",
+              border: "none",
+            }}
+          >
+            Go Back
+          </button>
         </div>
+      );
+    }
 
-        <button
-          onClick={beginStartSetup}
-          disabled={!canContinueFromSetup}
-          style={{
-            marginTop: "20px",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-            textShadow: canContinueFromSetup
-              ? "0 0 20px #1155cc, 0 0 40px #1155cc"
-              : "none",
-            fontWeight: "bold",
-            cursor: canContinueFromSetup ? "pointer" : "not-allowed",
-            border: "none",
-          }}
-        >
-          Start Game
-        </button>
-        <button
-          onClick={() => setMode("trueHome")}
-          style={{
-            marginTop: "20px",
-            marginLeft: "10px",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
-            fontWeight: "bold",
-            cursor: "pointer",
-            border: "none",
-          }}
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
+    if (phase === "start") {
+      return (
+        <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
+          <Header />
+          <h2>Get Ready!</h2>
+          <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
+            The theme is hidden until you begin acrosticizing.
+          </p>
+          <button
+            onClick={startWritingPhase}
+            style={{
+              padding: "12px 24px",
+              borderRadius: "8px",
+              background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Reveal Theme & Start Acrosticizing
+          </button>
+        </div>
+      );
+    }
 
-  if (phase === "start") {
-    return (
-      <div style={{ padding: "20px", textAlign: "center", fontFamily: "Nunito, sans-serif", color: "#fff2cc", textShadow: "0 0 20px #1155cc, 0 0 40px #1155cc", background: "transparent", minHeight: "100vh" }}>
-        <Header />
-        <h2>Get Ready!</h2>
-        <p style={{ fontSize: "1.2rem", marginBottom: "20px" }}>
-          The theme is hidden until you begin acrosticizing.
-        </p>
-        <button
-          onClick={startWritingPhase}
-          style={{
-            padding: "12px 24px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          Reveal Theme & Start Acrosticizing
-        </button>
-      </div>
-    );
-  }
+    if (phase === "writing") {
+      return renderWritingPhase();
+    }
 
-  if (phase === "writing") {
-    return renderWritingPhase();
-  }
+    if (phase === "reveal") {
+      return renderRevealPhase();
+    }
 
-  if (phase === "reveal") {
-    return renderRevealPhase();
-  }
+    return null;
+  };
 
-  return null;
+  return (
+    <>
+      {hostTools}
+      {renderScreen()}
+    </>
+  );
 }
