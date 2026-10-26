@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import Header from "./Header";
+import { containsProfanity } from "./profanity";
 
 type ThemeSelectProps = {
   isJudge: boolean;
   themes: string[];
+  wordFilter?: boolean;
   onThemeChosen: (theme: string) => void;
 };
 
-export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSelectProps) {
+export default function ThemeSelect({ isJudge, themes, onThemeChosen, wordFilter = false }: ThemeSelectProps) {
   const [themeMode, setThemeMode] = useState<"random" | "custom">("random");
   const [customTheme, setCustomTheme] = useState("");
+  const [error, setError] = useState("");
 
   const handleConfirm = () => {
     if (themeMode === "random") {
@@ -17,6 +20,10 @@ export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSel
       onThemeChosen(randomTheme);
     } else {
       if (customTheme.trim().length === 0) return;
+      if (wordFilter && containsProfanity(customTheme)) {
+        setError("Please keep it friendly. That theme has a word that isn't allowed in this game.");
+        return;
+      }
       onThemeChosen(customTheme.trim());
     }
   };
@@ -86,7 +93,10 @@ export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSel
         <input
           type="text"
           value={customTheme}
-          onChange={(e) => setCustomTheme(e.target.value)}
+          onChange={(e) => {
+            setCustomTheme(e.target.value);
+            setError("");
+          }}
           placeholder="Enter custom theme..."
           style={{
             width: "100%",
@@ -96,6 +106,12 @@ export default function ThemeSelect({ isJudge, themes, onThemeChosen }: ThemeSel
             marginBottom: "20px",
           }}
         />
+      )}
+
+      {error && (
+        <div style={{ color: "#ff4444", marginBottom: "16px", fontWeight: "bold" }}>
+          {error}
+        </div>
       )}
 
       <button

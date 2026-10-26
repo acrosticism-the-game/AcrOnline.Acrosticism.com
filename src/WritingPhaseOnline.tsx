@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
+import { containsProfanity } from "./profanity";
 
 const TIMER_SECONDS = 120;
 
@@ -16,6 +17,7 @@ type WritingPhaseOnlineProps = {
   isJudge: boolean;
   theme: string;
   words: string[];
+  wordFilter?: boolean;
   onSubmitted: () => void;
   onForceAdvance: () => void;
 };
@@ -26,6 +28,7 @@ export default function WritingPhaseOnline({
   isJudge,
   theme,
   words,
+  wordFilter = false,
   onSubmitted,
   onForceAdvance,
 }: WritingPhaseOnlineProps) {
@@ -145,10 +148,19 @@ export default function WritingPhaseOnline({
     updated[index] = corrected;
     setCurrentLines(updated);
     saveDraft(draftKey, assignedWord, updated);
+    setSubmitError("");
   };
 
   const handleSubmit = useCallback(async () => {
     if (submittingRef.current) return;
+
+    if (wordFilter && currentLines.some((line) => containsProfanity(line))) {
+      setSubmitError(
+        "Please keep it friendly. One of your lines has a word that isn't allowed in this game."
+      );
+      return;
+    }
+
     submittingRef.current = true;
 
     const { error } = await supabase.from("submissions").insert({
@@ -171,7 +183,7 @@ export default function WritingPhaseOnline({
     setSubmitError("");
     setHasSubmitted(true);
     onSubmitted();
-  }, [roundId, playerId, assignedWord, currentLines, onSubmitted, draftKey]);
+  }, [roundId, playerId, assignedWord, currentLines, onSubmitted, draftKey, wordFilter]);
 
   // Auto-submit when the timer hits 0
   useEffect(() => {

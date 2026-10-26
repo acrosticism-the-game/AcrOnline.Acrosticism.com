@@ -82,6 +82,7 @@ export default function AcrOnline() {
     winning_submission_id: string | null;
   } | null>(null);
   const [anonymousSubmissions, setAnonymousSubmissions] = useState(true);
+  const [wordFilter, setWordFilter] = useState(false);
   const [roomStatus, setRoomStatus] = useState("waiting");
   const [isLastTurn, setIsLastTurn] = useState(false);
   const [matchNumber, setMatchNumber] = useState(1);
@@ -99,13 +100,14 @@ export default function AcrOnline() {
     const fetchCurrentRound = async () => {
       const { data: roomData } = await supabase
         .from("rooms")
-        .select("anonymous_submissions, status, match_number")
+        .select("anonymous_submissions, word_filter, status, match_number")
         .eq("id", onlineRoomId)
         .maybeSingle();
 
       if (!roomData) return;
 
       setAnonymousSubmissions(roomData.anonymous_submissions);
+      setWordFilter(!!roomData.word_filter);
       setRoomStatus(roomData.status);
       setMatchNumber(roomData.match_number);
 
@@ -186,6 +188,7 @@ export default function AcrOnline() {
           if (payload.new) {
             setRoomStatus(payload.new.status);
             setAnonymousSubmissions(payload.new.anonymous_submissions);
+            setWordFilter(!!payload.new.word_filter);
             setMatchNumber(payload.new.match_number);
 
             setShowResultsPage(payload.new.viewing_results);
@@ -684,7 +687,7 @@ export default function AcrOnline() {
     );
   };
 
-    const showHostTools =
+  const showHostTools =
     onlineIsHost &&
     mode === "onlineRound" &&
     currentRound !== null &&
@@ -985,9 +988,10 @@ export default function AcrOnline() {
 
       if (currentRound.phase === "theme_select") {
         return (
-          <ThemeSelect
-            isJudge={isJudge}
-            themes={themes}
+        <ThemeSelect
+          isJudge={isJudge}
+          themes={themes}
+          wordFilter={wordFilter}
             onThemeChosen={async (theme) => {
               try {
                 await chooseTheme(currentRound.id, theme);
@@ -1007,6 +1011,7 @@ export default function AcrOnline() {
             isJudge={isJudge}
             theme={currentRound.theme || ""}
             words={words}
+            wordFilter={wordFilter}
             onSubmitted={async () => {
               try {
                 await checkAndAdvanceToJudging(onlineRoomId, currentRound.id, currentRound.judge_player_id);

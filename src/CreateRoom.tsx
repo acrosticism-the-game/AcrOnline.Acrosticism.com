@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "./Header";
 import { createRoom, filterRoomCodeWords } from "./roomUtils";
+import { containsProfanity } from "./profanity";
 import { Role } from "./session";
 
 type CreateRoomProps = {
@@ -20,14 +21,25 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
   const [hostRole, setHostRole] = useState<"player" | "spectator">("player");
   const [hostName, setHostName] = useState("");
   const [anonymousSubmissions, setAnonymousSubmissions] = useState(true);
+  const [wordFilter, setWordFilter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleCreate = async () => {
     const asSpectator = hostRole === "spectator";
 
+    if (words.length === 0) {
+      setError("Still loading the word list. Give it a few seconds and try again.");
+      return;
+    }
+
     if (!asSpectator && hostName.trim().length === 0) {
       setError("Please enter your name.");
+      return;
+    }
+
+    if (!asSpectator && wordFilter && containsProfanity(hostName)) {
+      setError("That name isn't allowed with the word filter on. Please pick a different one.");
       return;
     }
 
@@ -39,15 +51,12 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
       if (candidateWords.length === 0) {
         throw new Error("The word list did not load. Refresh the page and try again.");
       }
-      if (candidateWords.length === 0) {
-        throw new Error("The word list did not load. Refresh the page and try again.");
-      }
-      console.log("words:", words.length, "usable codes:", candidateWords.length, "first few:", words.slice(0, 3));
       const { room, player, hostToken } = await createRoom(
         hostName.trim(),
         anonymousSubmissions,
         candidateWords,
-        asSpectator
+        asSpectator,
+        wordFilter
       );
 
       if (asSpectator || !player) {
@@ -61,6 +70,61 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
       setLoading(false);
     }
   };
+
+  const renderSwitch = (
+    label: string,
+    hint: string,
+    checked: boolean,
+    onChange: (value: boolean) => void
+  ) => (
+    <div style={{ marginBottom: "16px", textAlign: "left" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: "bold", fontSize: "1.05rem" }}>{label}</div>
+          <div style={{ fontSize: "0.9rem", opacity: 0.85 }}>{hint}</div>
+        </div>
+        <button
+          role="switch"
+          aria-checked={checked}
+          aria-label={label}
+          onClick={() => onChange(!checked)}
+          style={{
+            position: "relative",
+            width: "56px",
+            height: "30px",
+            flexShrink: 0,
+            borderRadius: "999px",
+            border: "none",
+            cursor: "pointer",
+            background: checked
+              ? "linear-gradient(90deg, #ff7ee5, #7afcff)"
+              : "rgba(255,255,255,0.25)",
+            transition: "background 0.2s ease",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: "3px",
+              left: checked ? "29px" : "3px",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              background: "#ffffff",
+              transition: "left 0.2s ease",
+            }}
+          />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -147,15 +211,19 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
         />
       )}
 
-      <div style={{ marginBottom: "20px", textAlign: "left" }}>
-        <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={anonymousSubmissions}
-            onChange={(e) => setAnonymousSubmissions(e.target.checked)}
-          />
-          Anonymous Submissions
-        </label>
+      <div style={{ marginBottom: "8px" }}>
+        {renderSwitch(
+          "Anonymous Submissions",
+          "Hide who wrote each backronym while the judge decides.",
+          anonymousSubmissions,
+          setAnonymousSubmissions
+        )}
+        {renderSwitch(
+          "Word Filter",
+          "Block inappropriate words in names and backronyms. Good for public games.",
+          wordFilter,
+          setWordFilter
+        )}
       </div>
 
       {error && (
@@ -166,7 +234,7 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
 
       <button
         onClick={handleCreate}
-        disabled={loading}
+        disabled={loading || words.length === 0}
         style={{
           display: "block",
           width: "100%",

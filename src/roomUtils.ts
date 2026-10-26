@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { containsProfanity } from "./profanity";
 
 // Filter words to valid room-code length (3–7 letters, alphabetic only)
 export const filterRoomCodeWords = (words: string[]): string[] => {
@@ -45,7 +46,8 @@ export const createRoom = async (
   hostName: string,
   anonymousSubmissions: boolean,
   candidateWords: string[],
-  hostAsSpectator = false
+  hostAsSpectator = false,
+  wordFilter = false
 ) => {
   const roomCode = await generateUniqueRoomCode(candidateWords);
   if (!roomCode) throw new Error("Could not generate a unique room code. Try again.");
@@ -57,6 +59,7 @@ export const createRoom = async (
     .insert({
       room_code: roomCode,
       anonymous_submissions: anonymousSubmissions,
+      word_filter: wordFilter,
       host_token: hostAsSpectator ? hostToken : null,
     })
     .select()
@@ -88,6 +91,10 @@ export const joinRoom = async (roomCode: string, playerName: string) => {
     .maybeSingle();
 
   if (roomError || !room) throw new Error("Room not found or already started.");
+
+  if (room.word_filter && containsProfanity(playerName)) {
+    throw new Error("That name isn't allowed in this room. Please pick a different one.");
+  }
 
   const { data: player, error: playerError } = await supabase
     .from("room_players")
