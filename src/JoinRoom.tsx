@@ -10,7 +10,8 @@ type JoinRoomProps = {
     roomCode: string,
     playerId: string,
     playerName: string,
-    role: Role
+    role: Role,
+    playerToken: string
   ) => void;
   onBack: () => void;
   initialCode?: string;
@@ -45,10 +46,10 @@ export default function JoinRoom({ onRoomJoined, onBack, initialCode }: JoinRoom
           .neq("status", "closed")
           .maybeSingle();
         if (!room) throw new Error("Room not found. Check the code and try again.");
-        onRoomJoined(room.id, room.room_code, "", "", "spectator");
+        onRoomJoined(room.id, room.room_code, "", "", "spectator", "");
       } else {
-        const { room, player } = await joinRoom(roomCode.trim(), playerName.trim());
-        onRoomJoined(room.id, room.room_code, player.id, player.player_name, "player");
+        const { room, player, playerToken } = await joinRoom(roomCode.trim(), playerName.trim());
+        onRoomJoined(room.id, room.room_code, player.id, player.player_name, "player", playerToken);
       }
     } catch (err: any) {
       const msg: string = err.message || "Something went wrong joining the room.";

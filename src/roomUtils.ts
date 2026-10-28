@@ -39,9 +39,6 @@ export const generateUniqueRoomCode = async (
   return null; // ran out of attempts, extremely unlikely
 };
 
-const makeToken = () =>
-  Math.random().toString(36).slice(2) + Date.now().toString(36);
-
 export const createRoom = async (
   hostName: string,
   anonymousSubmissions: boolean,
@@ -52,34 +49,22 @@ export const createRoom = async (
   const roomCode = await generateUniqueRoomCode(candidateWords);
   if (!roomCode) throw new Error("Could not generate a unique room code. Try again.");
 
-  const hostToken = hostAsSpectator ? makeToken() : "";
+  const { data, error } = await supabase.rpc("create_room", {
+    p_room_code: roomCode,
+    p_anonymous: anonymousSubmissions,
+    p_word_filter: wordFilter,
+    p_host_name: hostName,
+    p_host_as_spectator: hostAsSpectator,
+  });
 
-  const { data: room, error: roomError } = await supabase
-    .from("rooms")
-    .insert({
-      room_code: roomCode,
-      anonymous_submissions: anonymousSubmissions,
-      word_filter: wordFilter,
-      host_token: hostAsSpectator ? hostToken : null,
-    })
-    .select()
-    .single();
+  if (error || !data) throw error || new Error("Could not create the room.");
 
-  if (roomError || !room) throw roomError;
-
-  if (hostAsSpectator) {
-    return { room, player: null, hostToken };
-  }
-
-  const { data: player, error: playerError } = await supabase
-    .from("room_players")
-    .insert({ room_id: room.id, player_name: hostName })
-    .select()
-    .single();
-
-  if (playerError || !player) throw playerError;
-
-  return { room, player, hostToken: "" };
+  return {
+    room: data.room,
+    player: data.player,
+    hostToken: data.host_token as string,
+    playerToken: (data.player_token || "") as string,
+  };
 };
 
 export const joinRoom = async (roomCode: string, playerName: string) => {
@@ -96,15 +81,18 @@ export const joinRoom = async (roomCode: string, playerName: string) => {
     throw new Error("That name isn't allowed in this room. Please pick a different one.");
   }
 
-  const { data: player, error: playerError } = await supabase
-    .from("room_players")
-    .insert({ room_id: room.id, player_name: playerName })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("join_room", {
+    p_room_code: roomCode,
+    p_player_name: playerName,
+  });
 
-  if (playerError || !player) throw playerError;
+  if (error || !data) throw error || new Error("Could not join the room.");
 
-  return { room, player };
+  return {
+    room: data.room,
+    player: data.player,
+    playerToken: data.player_token as string,
+  };
 };
 
 export const startMatch = async (roomId: string) => {

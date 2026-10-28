@@ -12,7 +12,8 @@ type CreateRoomProps = {
     playerId: string,
     playerName: string,
     role: Role,
-    hostToken: string
+    hostToken: string,
+    playerToken: string
   ) => void;
   onBack: () => void;
 };
@@ -51,7 +52,7 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
       if (candidateWords.length === 0) {
         throw new Error("The word list did not load. Refresh the page and try again.");
       }
-      const { room, player, hostToken } = await createRoom(
+      const { room, player, hostToken, playerToken } = await createRoom(
         hostName.trim(),
         anonymousSubmissions,
         candidateWords,
@@ -60,9 +61,9 @@ export default function CreateRoom({ words, onRoomCreated, onBack }: CreateRoomP
       );
 
       if (asSpectator || !player) {
-        onRoomCreated(room.id, room.room_code, "", "", "host-spectator", hostToken);
+        onRoomCreated(room.id, room.room_code, "", "", "host-spectator", hostToken, "");
       } else {
-        onRoomCreated(room.id, room.room_code, player.id, player.player_name, "player", "");
+        onRoomCreated(room.id, room.room_code, player.id, player.player_name, "player", hostToken, playerToken);
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong creating the room.");

@@ -90,6 +90,7 @@ export default function AcrOnline() {
   const [restoring, setRestoring] = useState(true);
   const [onlineRole, setOnlineRole] = useState<Role>("player");
   const [, setHostToken] = useState("");
+  const [, setPlayerToken] = useState("");
   const [initialCode, setInitialCode] = useState("");
   const [notice, setNotice] = useState("");
   const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
@@ -235,6 +236,7 @@ export default function AcrOnline() {
         setOnlineIsHost(saved.isHost);
         setOnlineRole(saved.role);
         setHostToken(saved.hostToken);
+        setPlayerToken(saved.playerToken);
         setMode("onlineLobby");
       } finally {
         setRestoring(false);
@@ -800,7 +802,9 @@ export default function AcrOnline() {
       return (
         <CreateRoom
           words={words}
-          onRoomCreated={(roomId, roomCode, playerId, playerName, role, token) => {
+          onRoomCreated={(roomId, roomCode, playerId, playerName, role, token, pToken) => {
+            saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token, playerToken: pToken });
+            setPlayerToken(pToken);
             saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
@@ -819,7 +823,10 @@ export default function AcrOnline() {
       return (
         <JoinRoom
           initialCode={initialCode}
-          onRoomJoined={(roomId, roomCode, playerId, playerName, role) => {
+          onRoomJoined={(roomId, roomCode, playerId, playerName, role, pToken) => {
+            saveSession({ roomId, roomCode, playerId, isHost: false, role, playerToken: pToken });
+            setPlayerToken(pToken);
+            setHostToken("");
             saveSession({ roomId, roomCode, playerId, isHost: false, role });
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
@@ -988,10 +995,10 @@ export default function AcrOnline() {
 
       if (currentRound.phase === "theme_select") {
         return (
-        <ThemeSelect
-          isJudge={isJudge}
-          themes={themes}
-          wordFilter={wordFilter}
+          <ThemeSelect
+            isJudge={isJudge}
+            themes={themes}
+            wordFilter={wordFilter}
             onThemeChosen={async (theme) => {
               try {
                 await chooseTheme(currentRound.id, theme);
