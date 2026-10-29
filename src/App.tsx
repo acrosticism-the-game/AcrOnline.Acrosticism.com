@@ -89,8 +89,8 @@ export default function AcrOnline() {
   const [showResultsPage, setShowResultsPage] = useState(false);
   const [restoring, setRestoring] = useState(true);
   const [onlineRole, setOnlineRole] = useState<Role>("player");
-  const [, setHostToken] = useState("");
-  const [, setPlayerToken] = useState("");
+  const [hostToken, setHostToken] = useState("");
+  const [playerToken, setPlayerToken] = useState("");
   const [initialCode, setInitialCode] = useState("");
   const [notice, setNotice] = useState("");
   const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
@@ -849,9 +849,10 @@ export default function AcrOnline() {
           isHost={onlineIsHost}
           role={onlineRole}
           spectatorCount={spectatorCount}
+          hostToken={hostToken}
           onStartMatch={async () => {
             try {
-              await startMatch(onlineRoomId);
+              await startMatch(onlineRoomId, hostToken);
             } catch (err: any) {
               console.error("Failed to start match:", err.message);
             }
@@ -860,9 +861,9 @@ export default function AcrOnline() {
             const wasHost = onlineIsHost;
             try {
               if (wasHost) {
-                await closeRoom(onlineRoomId);
+                await closeRoom(onlineRoomId, hostToken);
               } else if (onlineRole === "player") {
-                await leaveRoom(onlinePlayerId);
+                await leaveRoom(onlinePlayerId, playerToken);
               }
             } catch (err: any) {
               console.error("Failed to leave room:", err.message);

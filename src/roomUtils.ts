@@ -95,48 +95,14 @@ export const joinRoom = async (roomCode: string, playerName: string) => {
   };
 };
 
-export const startMatch = async (roomId: string) => {
-  // Get all players in this room
-  const { data: players, error: playersError } = await supabase
-    .from("room_players")
-    .select("id")
-    .eq("room_id", roomId);
+export const startMatch = async (roomId: string, hostToken: string) => {
+  const { data, error } = await supabase.rpc("start_match", {
+    p_room_id: roomId,
+    p_host_token: hostToken,
+  });
 
-  if (playersError || !players || players.length < 3) {
-    throw new Error("Could not start match — not enough players found.");
-  }
-
-  // Pick a random judge
-  const judge = players[Math.floor(Math.random() * players.length)];
-
-  // Create the first round of match 1
-  const { data: round, error: roundError } = await supabase
-    .from("rounds")
-    .insert({
-      room_id: roomId,
-      round_number: 1,
-      judge_player_id: judge.id,
-      phase: "theme_select",
-      match_number: 1,
-    })
-    .select()
-    .single();
-
-  if (roundError || !round) throw roundError;
-
-  // Mark room as in progress + stamp match_number
-  const { error: roomError } = await supabase
-    .from("rooms")
-    .update({
-      status: "in_progress",
-      current_round_id: round.id,
-      match_number: 1,
-    })
-    .eq("id", roomId);
-
-  if (roomError) throw roomError;
-
-  return round;
+  if (error) throw error;
+  return data;
 };
 
 export const chooseTheme = async (roundId: string, theme: string) => {
@@ -416,21 +382,30 @@ export const chooseTieWinners = async (roundId: string, submissionIds: string[])
   if (roundError) throw roundError;
 };
 
-export const leaveRoom = async (playerId: string) => {
-  const { error } = await supabase
-    .from("room_players")
-    .delete()
-    .eq("id", playerId);
+export const leaveRoom = async (playerId: string, playerToken: string) => {
+  const { error } = await supabase.rpc("leave_room", {
+    p_player_id: playerId,
+    p_player_token: playerToken,
+  });
 
   if (error) throw error;
 };
 
-export const closeRoom = async (roomId: string) => {
-  const { error } = await supabase
-    .from("rooms")
-    .update({ status: "closed" })
-    .eq("id", roomId)
-    .eq("status", "waiting");
+export const removePlayer = async (roomId: string, hostToken: string, playerId: string) => {
+  const { error } = await supabase.rpc("remove_player", {
+    p_room_id: roomId,
+    p_host_token: hostToken,
+    p_player_id: playerId,
+  });
+
+  if (error) throw error;
+};
+
+export const closeRoom = async (roomId: string, hostToken: string) => {
+  const { error } = await supabase.rpc("close_room", {
+    p_room_id: roomId,
+    p_host_token: hostToken,
+  });
 
   if (error) throw error;
 };

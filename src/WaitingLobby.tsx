@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
-import { leaveRoom } from "./roomUtils";
+import { removePlayer } from "./roomUtils";
 import { Role } from "./session";
 
 type Player = {
@@ -19,6 +19,7 @@ type WaitingLobbyProps = {
   isHost: boolean;
   role: Role;
   spectatorCount: number;
+  hostToken: string;
   onStartMatch: () => void;
   onBack: () => void;
   onRemoved: () => void;
@@ -31,6 +32,7 @@ export default function WaitingLobby({
   isHost,
   role,
   spectatorCount,
+  hostToken,
   onStartMatch,
   onBack,
   onRemoved,
@@ -164,7 +166,7 @@ export default function WaitingLobby({
               <button
                 onClick={async () => {
                   try {
-                    await leaveRoom(p.id);
+                    await removePlayer(roomId, hostToken, p.id);
                     setPlayers((prev) => prev.filter((x) => x.id !== p.id));
                   } catch (err: any) {
                     setError(err.message || "Could not remove that player.");
