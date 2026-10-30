@@ -105,16 +105,18 @@ export const startMatch = async (roomId: string, hostToken: string) => {
   return data;
 };
 
-export const chooseTheme = async (roundId: string, theme: string) => {
-  const { error } = await supabase
-    .from("rounds")
-    .update({
-      theme: theme,
-      theme_revealed: true,
-      phase: "writing",
-      writing_started_at: new Date().toISOString(),
-    })
-    .eq("id", roundId);
+export const chooseTheme = async (
+  roundId: string,
+  playerId: string,
+  playerToken: string,
+  theme: string
+) => {
+  const { error } = await supabase.rpc("choose_theme", {
+    p_round_id: roundId,
+    p_player_id: playerId,
+    p_player_token: playerToken,
+    p_theme: theme,
+  });
 
   if (error) throw error;
 };
@@ -332,12 +334,16 @@ export const startNewMatch = async (roomId: string) => {
 
   return round;
 };
-export const forceAdvanceToJudging = async (roundId: string) => {
-  const { error } = await supabase
-    .from("rounds")
-    .update({ phase: "judging" })
-    .eq("id", roundId)
-    .eq("phase", "writing");
+export const forceAdvanceToJudging = async (
+  roundId: string,
+  playerId: string,
+  playerToken: string
+) => {
+  const { error } = await supabase.rpc("force_advance", {
+    p_round_id: roundId,
+    p_player_id: playerId,
+    p_player_token: playerToken,
+  });
 
   if (error) throw error;
 };

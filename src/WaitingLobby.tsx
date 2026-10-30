@@ -95,6 +95,7 @@ export default function WaitingLobby({
   }, [loaded, players, role, isHost, playerId, onRemoved]);
 
   const isProjector = role === "host-spectator";
+  const showjoininfo = isHost;
   const joinLink = `${window.location.origin}/?room=${encodeURIComponent(roomCode)}`;
   const spectatorLine =
     spectatorCount === 1
@@ -119,12 +120,12 @@ export default function WaitingLobby({
         Waiting Lobby
       </h1>
 
-      {isProjector ? (
+      {showjoininfo ? (
         <div style={{ marginBottom: "30px" }}>
           <div style={{ fontSize: "1.3rem", marginBottom: "8px" }}>Room Code</div>
           <div
             style={{
-              fontSize: "5rem",
+              fontSize: "clamp(2.5rem, 12vw, 5rem)",
               fontWeight: 800,
               letterSpacing: "0.15em",
               marginBottom: "20px",

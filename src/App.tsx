@@ -6,7 +6,7 @@ import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 import WaitingLobby from "./WaitingLobby";
 import { startMatch, closeRoom, leaveRoom } from "./roomUtils";
-import { chooseTheme, checkAndAdvanceToJudging, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch, forceAdvanceToJudging, chooseTieWinners, declareLie } from "./roomUtils";
+import { chooseTheme, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch, forceAdvanceToJudging, chooseTieWinners, declareLie } from "./roomUtils";
 import ThemeSelect from "./ThemeSelect";
 import WritingPhaseOnline from "./WritingPhaseOnline";
 import JudgingScreen from "./JudgingScreen";
@@ -168,7 +168,7 @@ export default function AcrOnline() {
 
       if (elapsedSeconds >= 125) {
         try {
-          await forceAdvanceToJudging(currentRound.id);
+          await forceAdvanceToJudging(currentRound.id, onlinePlayerId, playerToken);
         } catch (err: any) {
           console.error("Failed to force-advance:", err.message);
         }
@@ -176,7 +176,7 @@ export default function AcrOnline() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentRound, onlineRole]);
+  }, [currentRound, onlineRole, onlinePlayerId, playerToken]);
   useEffect(() => {
     if (!onlineRoomId) return;
 
@@ -1002,7 +1002,7 @@ export default function AcrOnline() {
             wordFilter={wordFilter}
             onThemeChosen={async (theme) => {
               try {
-                await chooseTheme(currentRound.id, theme);
+                await chooseTheme(currentRound.id, onlinePlayerId, playerToken, theme);
               } catch (err: any) {
                 console.error("Failed to choose theme:", err.message);
               }
@@ -1020,16 +1020,11 @@ export default function AcrOnline() {
             theme={currentRound.theme || ""}
             words={words}
             wordFilter={wordFilter}
-            onSubmitted={async () => {
-              try {
-                await checkAndAdvanceToJudging(onlineRoomId, currentRound.id, currentRound.judge_player_id);
-              } catch (err: any) {
-                console.error("Failed to check/advance to judging:", err.message);
-              }
-            }}
+            playerToken={playerToken}
+            onSubmitted={() => { }}
             onForceAdvance={async () => {
               try {
-                await forceAdvanceToJudging(currentRound.id);
+                await forceAdvanceToJudging(currentRound.id, onlinePlayerId, playerToken);
               } catch (err: any) {
                 console.error("Failed to force advance:", err.message);
               }

@@ -14,6 +14,7 @@ const saveDraft = (key: string, word: string, lines: string[]) => {
 type WritingPhaseOnlineProps = {
   roundId: string;
   playerId: string;
+  playerToken: string;
   isJudge: boolean;
   theme: string;
   words: string[];
@@ -25,6 +26,7 @@ type WritingPhaseOnlineProps = {
 export default function WritingPhaseOnline({
   roundId,
   playerId,
+  playerToken,
   isJudge,
   theme,
   words,
@@ -163,11 +165,12 @@ export default function WritingPhaseOnline({
 
     submittingRef.current = true;
 
-    const { error } = await supabase.from("submissions").insert({
-      round_id: roundId,
-      player_id: playerId,
-      assigned_word: assignedWord,
-      lines: currentLines,
+    const { error } = await supabase.rpc("submit_backronym", {
+      p_round_id: roundId,
+      p_player_id: playerId,
+      p_player_token: playerToken,
+      p_word: assignedWord,
+      p_lines: currentLines,
     });
 
     if (error && error.code !== "23505") {
@@ -183,7 +186,7 @@ export default function WritingPhaseOnline({
     setSubmitError("");
     setHasSubmitted(true);
     onSubmitted();
-  }, [roundId, playerId, assignedWord, currentLines, onSubmitted, draftKey, wordFilter]);
+  }, [roundId, playerId, playerToken, assignedWord, currentLines, onSubmitted, draftKey, wordFilter]);
 
   // Auto-submit when the timer hits 0
   useEffect(() => {
