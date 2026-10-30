@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { containsProfanity } from "./profanity";
 
-// Filter words to valid room-code length (3–7 letters, alphabetic only)
+// Filter words to valid room-code length (3 to 7 letters, alphabetic only)
 export const filterRoomCodeWords = (words: string[]): string[] => {
   return words.filter((w) => {
     const clean = w.trim();
@@ -9,7 +9,7 @@ export const filterRoomCodeWords = (words: string[]): string[] => {
   });
 };
 
-// Pick a random word and try to create a room with it; retry on collision
+// Pick an unused room code word; fall back to a word plus two digits
 export const generateUniqueRoomCode = async (
   candidateWords: string[]
 ): Promise<string | null> => {
@@ -36,7 +36,7 @@ export const generateUniqueRoomCode = async (
     if (!taken.has(code)) return code;
   }
 
-  return null; // ran out of attempts, extremely unlikely
+  return null;
 };
 
 export const createRoom = async (
@@ -121,219 +121,6 @@ export const chooseTheme = async (
   if (error) throw error;
 };
 
-export const checkAndAdvanceToJudging = async (roomId: string, roundId: string, judgePlayerId: string) => {
-  // Count total players in the room
-  const { data: allPlayers, error: playersError } = await supabase
-    .from("room_players")
-    .select("id")
-    .eq("room_id", roomId);
-
-  if (playersError || !allPlayers) throw playersError;
-
-  const nonJudgeCount = allPlayers.filter((p) => p.id !== judgePlayerId).length;
-
-  // Count submissions for this round
-  const { data: submissions, error: submissionsError } = await supabase
-    .from("submissions")
-    .select("id")
-    .eq("round_id", roundId);
-
-  if (submissionsError || !submissions) throw submissionsError;
-
-  // If everyone (except the Judge) has submitted, advance the phase
-  if (submissions.length >= nonJudgeCount) {
-    const { error: updateError } = await supabase
-      .from("rounds")
-      .update({ phase: "judging" })
-      .eq("id", roundId);
-
-    if (updateError) throw updateError;
-  }
-};
-
-export const chooseWinner = async (roundId: string, submissionId: string, winningPlayerId: string) => {
-  // Mark this submission as the winner
-  const { error: subError } = await supabase
-    .from("submissions")
-    .update({ is_winner: true })
-    .eq("id", submissionId);
-
-  if (subError) throw subError;
-
-  // Move the round to reveal
-  const { error: roundError } = await supabase
-    .from("rounds")
-    .update({ winning_submission_id: submissionId, phase: "reveal" })
-    .eq("id", roundId);
-
-  if (roundError) throw roundError;
-
-  // Increment the winning player's score
-  const { data: player, error: fetchError } = await supabase
-    .from("room_players")
-    .select("score")
-    .eq("id", winningPlayerId)
-    .single();
-
-  if (fetchError || !player) throw fetchError;
-
-  const { error: scoreError } = await supabase
-    .from("room_players")
-    .update({ score: player.score + 1 })
-    .eq("id", winningPlayerId);
-
-  if (scoreError) throw scoreError;
-};
-export const advanceToNextRound = async (roomId: string, previousJudgePlayerId: string) => {
-  // Mark the previous judge as having judged
-  const { error: markJudgedError } = await supabase
-    .from("room_players")
-    .update({ has_judged: true })
-    .eq("id", previousJudgePlayerId);
-
-  if (markJudgedError) throw markJudgedError;
-
-  // Get all players
-  const { data: allPlayers, error: playersError } = await supabase
-    .from("room_players")
-    .select("id, has_judged")
-    .eq("room_id", roomId);
-
-  if (playersError || !allPlayers) throw playersError;
-
-  const remainingPlayers = allPlayers.filter((p) => !p.has_judged);
-
-  if (remainingPlayers.length === 0) {
-    // Everyone has judged — match is complete
-    const { error: completeError } = await supabase
-      .from("rooms")
-      .update({ status: "match_complete" })
-      .eq("id", roomId);
-
-    if (completeError) throw completeError;
-    return { matchComplete: true };
-  }
-
-  // Fetch current match_number
-  const { data: room, error: roomFetchError } = await supabase
-    .from("rooms")
-    .select("match_number")
-    .eq("id", roomId)
-    .single();
-
-  if (roomFetchError || !room) throw roomFetchError;
-
-  const newJudge = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-
-  // Get highest round_number for THIS match only
-  const { data: rounds, error: roundsError } = await supabase
-    .from("rounds")
-    .select("round_number")
-    .eq("room_id", roomId)
-    .eq("match_number", room.match_number)
-    .order("round_number", { ascending: false })
-    .limit(1);
-
-  if (roundsError) throw roundsError;
-
-  const nextRoundNumber = (rounds?.[0]?.round_number || 0) + 1;
-
-  // Create next round
-  const { data: newRound, error: newRoundError } = await supabase
-    .from("rounds")
-    .insert({
-      room_id: roomId,
-      round_number: nextRoundNumber,
-      judge_player_id: newJudge.id,
-      phase: "theme_select",
-      match_number: room.match_number,
-    })
-    .select()
-    .single();
-
-  if (newRoundError || !newRound) throw newRoundError;
-
-  return { matchComplete: false, round: newRound };
-};
-
-export const isLastTurnOfMatch = async (roomId: string, currentJudgePlayerId: string): Promise<boolean> => {
-  const { data: players, error } = await supabase
-    .from("room_players")
-    .select("id, has_judged")
-    .eq("room_id", roomId);
-
-  if (error || !players) return false;
-
-  const remaining = players.filter((p) => p.id !== currentJudgePlayerId && !p.has_judged);
-  return remaining.length === 0;
-};
-
-export const startNewMatch = async (roomId: string) => {
-  // Reset has_judged for all players
-  const { error: resetError } = await supabase
-    .from("room_players")
-    .update({ has_judged: false })
-    .eq("room_id", roomId);
-
-  if (resetError) throw resetError;
-
-  // Get current match_number
-  const { data: room, error: roomFetchError } = await supabase
-    .from("rooms")
-    .select("match_number")
-    .eq("id", roomId)
-    .single();
-
-  if (roomFetchError || !room) throw roomFetchError;
-
-  const newMatchNumber = room.match_number + 1;
-
-  // Update room to new match_number
-  const { error: roomUpdateError } = await supabase
-    .from("rooms")
-    .update({
-      status: "in_progress",
-      match_number: newMatchNumber,
-    })
-    .eq("id", roomId);
-
-  if (roomUpdateError) throw roomUpdateError;
-
-  // Pick a random judge
-  const { data: players, error: playersError } = await supabase
-    .from("room_players")
-    .select("id")
-    .eq("room_id", roomId);
-
-  if (playersError || !players) throw playersError;
-
-  const judge = players[Math.floor(Math.random() * players.length)];
-
-  // Create round 1 of the new match
-  const { data: round, error: roundError } = await supabase
-    .from("rounds")
-    .insert({
-      room_id: roomId,
-      round_number: 1,
-      judge_player_id: judge.id,
-      phase: "theme_select",
-      match_number: newMatchNumber,
-    })
-    .select()
-    .single();
-
-  if (roundError || !round) throw roundError;
-
-  // Update room's current_round_id
-  const { error: roomError } = await supabase
-    .from("rooms")
-    .update({ current_round_id: round.id })
-    .eq("id", roomId);
-
-  if (roomError) throw roomError;
-
-  return round;
-};
 export const forceAdvanceToJudging = async (
   roundId: string,
   playerId: string,
@@ -347,45 +134,90 @@ export const forceAdvanceToJudging = async (
 
   if (error) throw error;
 };
-export const chooseTieWinners = async (roundId: string, submissionIds: string[]) => {
-  // Mark each selected submission as a winner
-  const { error: subError } = await supabase
-    .from("submissions")
-    .update({ is_winner: true })
-    .in("id", submissionIds);
 
-  if (subError) throw subError;
+export const chooseWinners = async (
+  roundId: string,
+  playerId: string,
+  playerToken: string,
+  submissionIds: string[]
+) => {
+  const { error } = await supabase.rpc("choose_winners", {
+    p_round_id: roundId,
+    p_player_id: playerId,
+    p_player_token: playerToken,
+    p_submission_ids: submissionIds,
+  });
 
-  // Fetch each submission's player, and increment their score
-  const { data: subs, error: fetchSubsError } = await supabase
-    .from("submissions")
-    .select("player_id")
-    .in("id", submissionIds);
+  if (error) throw error;
+};
 
-  if (fetchSubsError || !subs) throw fetchSubsError;
+export const declareLie = async (
+  roundId: string,
+  playerId: string,
+  playerToken: string
+) => {
+  const { error } = await supabase.rpc("declare_lie", {
+    p_round_id: roundId,
+    p_player_id: playerId,
+    p_player_token: playerToken,
+  });
 
-  for (const sub of subs) {
-    const { data: player, error: fetchError } = await supabase
-      .from("room_players")
-      .select("score")
-      .eq("id", sub.player_id)
-      .single();
+  if (error) throw error;
+};
 
-    if (fetchError || !player) continue;
+export const advanceToNextRound = async (
+  roomId: string,
+  roundId: string,
+  playerId: string,
+  playerToken: string,
+  hostToken: string
+) => {
+  const { data, error } = await supabase.rpc("advance_round", {
+    p_room_id: roomId,
+    p_round_id: roundId,
+    p_player_id: playerId || null,
+    p_player_token: playerToken || null,
+    p_host_token: hostToken || null,
+  });
 
-    await supabase
-      .from("room_players")
-      .update({ score: player.score + 1 })
-      .eq("id", sub.player_id);
-  }
+  if (error) throw error;
+  return data;
+};
 
-  // Move the round to reveal
-  const { error: roundError } = await supabase
-    .from("rounds")
-    .update({ phase: "reveal" })
-    .eq("id", roundId);
+export const isLastTurnOfMatch = async (
+  roomId: string,
+  currentJudgePlayerId: string
+): Promise<boolean> => {
+  const { data: players, error } = await supabase
+    .from("room_players")
+    .select("id, has_judged")
+    .eq("room_id", roomId);
 
-  if (roundError) throw roundError;
+  if (error || !players) return false;
+
+  const remaining = players.filter(
+    (p) => p.id !== currentJudgePlayerId && !p.has_judged
+  );
+  return remaining.length === 0;
+};
+
+export const startNewMatch = async (roomId: string, hostToken: string) => {
+  const { data, error } = await supabase.rpc("start_new_match", {
+    p_room_id: roomId,
+    p_host_token: hostToken,
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+export const showResults = async (roomId: string, hostToken: string) => {
+  const { error } = await supabase.rpc("show_results", {
+    p_room_id: roomId,
+    p_host_token: hostToken,
+  });
+
+  if (error) throw error;
 };
 
 export const leaveRoom = async (playerId: string, playerToken: string) => {
@@ -412,15 +244,6 @@ export const closeRoom = async (roomId: string, hostToken: string) => {
     p_room_id: roomId,
     p_host_token: hostToken,
   });
-
-  if (error) throw error;
-};
-
-export const declareLie = async (roundId: string) => {
-  const { error } = await supabase
-    .from("rounds")
-    .update({ phase: "reveal" })
-    .eq("id", roundId);
 
   if (error) throw error;
 };

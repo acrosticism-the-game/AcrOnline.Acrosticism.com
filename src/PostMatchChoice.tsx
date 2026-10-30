@@ -1,6 +1,5 @@
 import React from "react";
 import Header from "./Header";
-import { supabase } from "./supabaseClient";
 
 type PostMatchChoiceProps = {
   isHost: boolean;
@@ -11,7 +10,6 @@ type PostMatchChoiceProps = {
 
 export default function PostMatchChoice({
   isHost,
-  roomId,
   onNewMatch,
   onShowResults,
 }: PostMatchChoiceProps) {
@@ -70,14 +68,7 @@ export default function PostMatchChoice({
       </button>
 
       <button
-        onClick={async () => {
-          await supabase
-            .from("rooms")
-            .update({ viewing_results: true })
-            .eq("id", roomId);
-
-          onShowResults();
-        }}
+        onClick={onShowResults}
         style={{
           display: "block",
           width: "100%",

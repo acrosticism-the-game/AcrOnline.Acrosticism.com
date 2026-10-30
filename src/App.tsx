@@ -6,7 +6,7 @@ import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 import WaitingLobby from "./WaitingLobby";
 import { startMatch, closeRoom, leaveRoom } from "./roomUtils";
-import { chooseTheme, chooseWinner, advanceToNextRound, isLastTurnOfMatch, startNewMatch, forceAdvanceToJudging, chooseTieWinners, declareLie } from "./roomUtils";
+import { chooseTheme, chooseWinners, advanceToNextRound, isLastTurnOfMatch, startNewMatch, showResults, forceAdvanceToJudging, declareLie } from "./roomUtils";
 import ThemeSelect from "./ThemeSelect";
 import WritingPhaseOnline from "./WritingPhaseOnline";
 import JudgingScreen from "./JudgingScreen";
@@ -700,7 +700,7 @@ export default function AcrOnline() {
     if (!currentRound) return;
     if (!window.confirm("Skip the current judge and move to the next turn?")) return;
     try {
-      await advanceToNextRound(onlineRoomId, currentRound.judge_player_id);
+      await advanceToNextRound(onlineRoomId, currentRound.id, onlinePlayerId, playerToken, hostToken);
     } catch (err: any) {
       console.error("Failed to skip judge:", err.message);
     }
@@ -921,14 +921,21 @@ export default function AcrOnline() {
           isHost={onlineIsHost}
           roomId={onlineRoomId}
           onNewMatch={async () => {
-            try {
-              await startNewMatch(onlineRoomId);
-              setShowResultsPage(false);
-            } catch (err: any) {
-              console.error("Failed to start new match:", err.message);
-            }
-          }}
-          onShowResults={() => setShowResultsPage(true)}
+          try {
+            await startNewMatch(onlineRoomId, hostToken);
+            setShowResultsPage(false);
+          } catch (err: any) {
+            console.error("Failed to start new match:", err.message);
+          }
+        }}
+        onShowResults={async () => {
+          try {
+            await showResults(onlineRoomId, hostToken);
+          } catch (err: any) {
+            console.error("Failed to show results:", err.message);
+          }
+          setShowResultsPage(true);
+        }}
         />
       );
     }
@@ -1042,29 +1049,21 @@ export default function AcrOnline() {
             theme={currentRound.theme || ""}
             onWinnerChosen={async (submissionId) => {
               try {
-                const { data: sub } = await supabase
-                  .from("submissions")
-                  .select("player_id")
-                  .eq("id", submissionId)
-                  .single();
-
-                if (sub) {
-                  await chooseWinner(currentRound.id, submissionId, sub.player_id);
-                }
+                await chooseWinners(currentRound.id, onlinePlayerId, playerToken, [submissionId]);
               } catch (err: any) {
                 console.error("Failed to choose winner:", err.message);
               }
             }}
             onTieChosen={async (submissionIds) => {
               try {
-                await chooseTieWinners(currentRound.id, submissionIds);
+                await chooseWinners(currentRound.id, onlinePlayerId, playerToken, submissionIds);
               } catch (err: any) {
                 console.error("Failed to choose tie winners:", err.message);
               }
             }}
             onLie={async () => {
               try {
-                await declareLie(currentRound.id);
+                await declareLie(currentRound.id, onlinePlayerId, playerToken);
               } catch (err: any) {
                 console.error("Failed to declare lie:", err.message);
               }
@@ -1081,12 +1080,12 @@ export default function AcrOnline() {
             isJudge={isJudge}
             isLastTurn={isLastTurn}
             onNextRound={async () => {
-              try {
-                await advanceToNextRound(onlineRoomId, currentRound.judge_player_id);
-              } catch (err: any) {
-                console.error("Failed to advance to next round:", err.message);
-              }
-            }}
+            try {
+              await advanceToNextRound(onlineRoomId, currentRound.id, onlinePlayerId, playerToken, hostToken);
+            } catch (err: any) {
+              console.error("Failed to advance to next round:", err.message);
+            }
+          }}
           />
         );
       }
