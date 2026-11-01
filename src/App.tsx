@@ -216,6 +216,16 @@ export default function AcrOnline() {
           return;
         }
 
+        if (
+          (saved.role === "player" && !saved.playerToken) ||
+          (saved.isHost && !saved.hostToken)
+        ) {
+          clearSession();
+          setNotice("Your game was started on an older version, so please rejoin.");
+          setMode("onlineLanding");
+          return;
+        }
+
         const { data: room } = await supabase
           .from("rooms").select("id").eq("id", saved.roomId).maybeSingle();
         let playerOk = true;
@@ -803,8 +813,8 @@ export default function AcrOnline() {
         <CreateRoom
           words={words}
           onRoomCreated={(roomId, roomCode, playerId, playerName, role, token, pToken) => {
-            saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token, playerToken: pToken });
-            setPlayerToken(pToken);
+          saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token, playerToken: pToken });
+          setPlayerToken(pToken);
             saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
@@ -824,9 +834,9 @@ export default function AcrOnline() {
         <JoinRoom
           initialCode={initialCode}
           onRoomJoined={(roomId, roomCode, playerId, playerName, role, pToken) => {
-            saveSession({ roomId, roomCode, playerId, isHost: false, role, playerToken: pToken });
-            setPlayerToken(pToken);
-            setHostToken("");
+          saveSession({ roomId, roomCode, playerId, isHost: false, role, playerToken: pToken });
+          setPlayerToken(pToken);
+          setHostToken("");
             saveSession({ roomId, roomCode, playerId, isHost: false, role });
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
