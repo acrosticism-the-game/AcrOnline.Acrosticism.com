@@ -175,7 +175,13 @@ export default function WritingPhaseOnline({
 
     if (error && error.code !== "23505") {
       console.error("Failed to submit:", error.message);
-      setSubmitError("Could not submit. Check your connection and tap Submit again.");
+      setSubmitError(
+        error.message.includes("Not allowed")
+          ? "Your session is out of date. Please leave and rejoin the game."
+          : error.message.includes("Time is up")
+          ? "Time is up for this round."
+          : "Could not submit. Check your connection and tap Submit again."
+      );
       submittingRef.current = false;
       return;
     }
