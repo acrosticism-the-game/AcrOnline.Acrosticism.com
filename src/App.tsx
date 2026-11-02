@@ -815,7 +815,6 @@ export default function AcrOnline() {
           onRoomCreated={(roomId, roomCode, playerId, playerName, role, token, pToken) => {
           saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token, playerToken: pToken });
           setPlayerToken(pToken);
-            saveSession({ roomId, roomCode, playerId, isHost: true, role, hostToken: token });
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
             setOnlinePlayerId(playerId);
@@ -836,8 +835,7 @@ export default function AcrOnline() {
           onRoomJoined={(roomId, roomCode, playerId, playerName, role, pToken) => {
           saveSession({ roomId, roomCode, playerId, isHost: false, role, playerToken: pToken });
           setPlayerToken(pToken);
-          setHostToken("");
-            saveSession({ roomId, roomCode, playerId, isHost: false, role });
+          setHostToken("");            
             setOnlineRoomId(roomId);
             setOnlineRoomCode(roomCode);
             setOnlinePlayerId(playerId);
