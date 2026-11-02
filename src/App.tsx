@@ -5,7 +5,7 @@ import OnlineLanding from "./OnlineLanding";
 import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 import WaitingLobby from "./WaitingLobby";
-import { startMatch, closeRoom, leaveRoom } from "./roomUtils";
+import { startMatch, closeRoom, leaveRoom, removePlayer } from "./roomUtils";
 import { chooseTheme, chooseWinners, advanceToNextRound, isLastTurnOfMatch, startNewMatch, showResults, forceAdvanceToJudging, declareLie } from "./roomUtils";
 import ThemeSelect from "./ThemeSelect";
 import WritingPhaseOnline from "./WritingPhaseOnline";
@@ -93,6 +93,9 @@ export default function AcrOnline() {
   const [playerToken, setPlayerToken] = useState("");
   const [initialCode, setInitialCode] = useState("");
   const [notice, setNotice] = useState("");
+  const [showPlayerPanel, setShowPlayerPanel] = useState(false);
+  const [panelPlayers, setPanelPlayers] = useState<{ id: string; player_name: string }[]>([]);
+  const [panelError, setPanelError] = useState("");
   const spectatorCount = useSpectatorCount(onlineRoomId, onlineRole);
 
   useEffect(() => {
@@ -254,6 +257,33 @@ export default function AcrOnline() {
     };
     restore();
   }, []);
+  // If the host removes this player mid-game, send them home
+  useEffect(() => {
+    if (mode !== "onlineRound" || onlineRole !== "player" || !onlinePlayerId) return;
+
+    const id = setInterval(async () => {
+      const { data, error } = await supabase
+        .from("room_players")
+        .select("id")
+        .eq("id", onlinePlayerId)
+        .maybeSingle();
+
+      if (!error && !data) {
+        clearSession();
+        setRoomStatus("waiting");
+        setOnlineRoomId("");
+        setOnlineRoomCode("");
+        setOnlinePlayerId("");
+        setOnlineRole("player");
+        setCurrentRound(null);
+        setMode("onlineLanding");
+        setNotice("The host removed you from the game.");
+      }
+    }, 5000);
+
+    return () => clearInterval(id);
+  }, [mode, onlineRole, onlinePlayerId]);
+
   // If the host closes the room while others are waiting, send them home
   useEffect(() => {
     if (roomStatus === "closed" && mode === "onlineLobby" && !onlineIsHost) {
@@ -716,6 +746,39 @@ export default function AcrOnline() {
     }
   };
 
+  const hostButtonStyle: React.CSSProperties = {
+    padding: "8px 14px",
+    borderRadius: "8px",
+    border: "none",
+    background: "rgba(0,0,0,0.55)",
+    color: "#fff2cc",
+    fontFamily: "Nunito, sans-serif",
+    fontWeight: "bold",
+    cursor: "pointer",
+  };
+
+  const openPlayerPanel = async () => {
+    setPanelError("");
+    const { data } = await supabase
+      .from("room_players")
+      .select("id, player_name")
+      .eq("room_id", onlineRoomId)
+      .order("joined_at", { ascending: true });
+    setPanelPlayers(data || []);
+    setShowPlayerPanel(true);
+  };
+
+  const removeFromGame = async (player: { id: string; player_name: string }) => {
+    if (!window.confirm(`Remove ${player.player_name} from the game?`)) return;
+    setPanelError("");
+    try {
+      await removePlayer(onlineRoomId, hostToken, player.id);
+      setPanelPlayers((prev) => prev.filter((p) => p.id !== player.id));
+    } catch (err: any) {
+      setPanelError(err.message || "Could not remove that player.");
+    }
+  };
+
   const hostTools = showHostTools ? (
     <div
       style={{
@@ -723,23 +786,76 @@ export default function AcrOnline() {
         bottom: "12px",
         right: "12px",
         zIndex: 1000,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        gap: "8px",
       }}
     >
-      <button
-        onClick={skipJudge}
-        style={{
-          padding: "8px 14px",
-          borderRadius: "8px",
-          border: "none",
-          background: "rgba(0,0,0,0.55)",
-          color: "#fff2cc",
-          fontFamily: "Nunito, sans-serif",
-          fontWeight: "bold",
-          cursor: "pointer",
-        }}
-      >
-        Host: Skip Judge
-      </button>
+      {showPlayerPanel && (
+        <div
+          style={{
+            background: "rgba(0,0,0,0.85)",
+            color: "#fff2cc",
+            fontFamily: "Nunito, sans-serif",
+            padding: "12px",
+            borderRadius: "10px",
+            minWidth: "210px",
+          }}
+        >
+          <div style={{ fontWeight: "bold", marginBottom: "8px" }}>Players</div>
+          {panelPlayers.map((p) => (
+            <div
+              key={p.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "6px",
+              }}
+            >
+              <span>
+                {p.player_name}
+                {p.id === onlinePlayerId ? " (you)" : ""}
+              </span>
+              {p.id !== onlinePlayerId && (
+                <button
+                  onClick={() => removeFromGame(p)}
+                  title="Remove player"
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    background: "#ff4444",
+                    color: "white",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    border: "none",
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          {panelError && (
+            <div style={{ color: "#ff8888", marginTop: "8px", fontSize: "0.9rem" }}>
+              {panelError}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button
+          onClick={showPlayerPanel ? () => setShowPlayerPanel(false) : openPlayerPanel}
+          style={hostButtonStyle}
+        >
+          {showPlayerPanel ? "Hide Players" : "Host: Players"}
+        </button>
+        <button onClick={skipJudge} style={hostButtonStyle}>
+          Host: Skip Judge
+        </button>
+      </div>
     </div>
   ) : null;
 

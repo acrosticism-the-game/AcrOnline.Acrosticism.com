@@ -1,11 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header";
+
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
   onSelectOnline: () => void;
 };
 
+const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
+const blueToPink = "linear-gradient(90deg, #7afcff, #ff7ee5)";
+
+const buttonStyle: React.CSSProperties = {
+  display: "block",
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "16px",
+  marginBottom: "16px",
+  borderRadius: "8px",
+  fontWeight: "bold",
+  fontSize: "1.1rem",
+  cursor: "pointer",
+  border: "none",
+  color: "#000000",
+  textShadow: "none",
+  textAlign: "center",
+  textDecoration: "none",
+  fontFamily: "Nunito, sans-serif",
+};
+
+const subtitleStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.85rem",
+  fontWeight: "normal",
+  marginTop: "4px",
+};
+
+const headingStyle: React.CSSProperties = {
+  fontWeight: 700,
+  fontSize: "clamp(32px, 9vw, 50px)",
+  marginBottom: "40px",
+};
+
 export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHomeProps) {
+  const [choosingMode, setChoosingMode] = useState(false);
+
   return (
     <div
       style={{
@@ -20,123 +57,64 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
       }}
     >
       <Header />
-      <h1
-        style={{
-          fontWeight: 700,
-          fontSize: "50px",
-          marginBottom: "40px",
-        }}
-      >
-        Play Acrosticism Now
-      </h1>
 
-      <button
-        onClick={onSelectPassAndPlay}
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "16px",
-          marginBottom: "16px",
-          borderRadius: "8px",
-          background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-          fontWeight: "bold",
-          fontSize: "1.1rem",
-          cursor: "pointer",
-          border: "none",
-        }}
-      >
-        Pass-and-Play
-      </button>
+      {choosingMode ? (
+        <>
+          <h1 style={headingStyle}>How Do You Want To Play?</h1>
 
-      <button
-        onClick={onSelectOnline}
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "16px",
-          marginBottom: "16px",
-          borderRadius: "8px",
-          background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
-          fontWeight: "bold",
-          fontSize: "1.1rem",
-          cursor: "pointer",
-          border: "none",
-        }}
-      >
-        Online Play
-      </button>
+          <button
+            onClick={onSelectOnline}
+            style={{ ...buttonStyle, background: pinkToBlue }}
+          >
+            Play Together Online
+            <span style={subtitleStyle}>Everyone on their own phone</span>
+          </button>
 
-      
-       <a
-       href="https://www.acrosticism.com/the-game/how-to-play"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ textDecoration: "none" }}
-      >
-        <button
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "16px",
-            marginBottom: "16px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #7afcff, #ff7ee5)",
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            cursor: "pointer",
-            border: "none",
-          }}
-        >
-          How to Play
-        </button>
-      </a>
+          <button
+            onClick={onSelectPassAndPlay}
+            style={{ ...buttonStyle, background: blueToPink }}
+          >
+            Pass and Play
+            <span style={subtitleStyle}>One device, passed around</span>
+          </button>
 
-      
-       <a href="https://www.acrosticism.com/store"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ textDecoration: "none" }}
-      >
-        <button
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "16px",
-            marginBottom: "16px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            cursor: "pointer",
-            border: "none",
-          }}
-        >
-          The Store
-        </button>
-      </a>
+          <button
+            onClick={() => setChoosingMode(false)}
+            style={{ ...buttonStyle, background: pinkToBlue }}
+          >
+            Back
+          </button>
+        </>
+      ) : (
+        <>
+          <h1 style={headingStyle}>Ready to Acrosticize?</h1>
 
-      
-        <a href="https://www.acrosticism.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ textDecoration: "none" }}
-      >
-        <button
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "16px",
-            borderRadius: "8px",
-            background: "linear-gradient(90deg, #ff7ee5, #7afcff)",
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            cursor: "pointer",
-            border: "none",
-          }}
-        >
-          Home
-        </button>
-      </a>
+          <button
+            onClick={() => setChoosingMode(true)}
+            style={{ ...buttonStyle, background: pinkToBlue }}
+          >
+            Play Now
+          </button>
+
+          <a
+            href="https://www.acrosticism.com/the-game/how-to-play"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...buttonStyle, background: blueToPink }}
+          >
+            How to Play
+          </a>
+
+          <a
+            href="https://www.acrosticism.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...buttonStyle, background: pinkToBlue }}
+          >
+            Acrosticism.com
+          </a>
+        </>
+      )}
     </div>
   );
 }
