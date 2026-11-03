@@ -1,46 +1,104 @@
-# Getting Started with Create React App
+# Acrosticism Online
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The web version of **Acrosticism**, a word and backronym game. If you can read, you can play.
 
-## Available Scripts
+**Play now:** https://play.acrosticism.com
 
-In the project directory, you can run:
+| | |
+|---|---|
+| Home | https://www.acrosticism.com |
+| Play (this app) | https://play.acrosticism.com |
+| Shop the physical game | https://shop.acrosticism.com |
 
-### `npm start`
+## What is Acrosticism?
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Each player gets a word and writes a backronym for it: one line per letter, with each line starting with that letter. A theme sets the topic, and a judge picks the best one. Two minutes on the clock, no age limit.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Ways to play
 
-### `npm test`
+**Pass and play** (one device, 2 to 6 players)
+- Enter player names and choose a random theme or write your own.
+- Players take turns on the same device, with a 2-minute timer each.
+- Everyone's backronyms are revealed together at the end of the round.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Online rooms** (each player on their own device)
+- The host creates a room and shares the room code or a link (`?room=CODE`).
+- Join as a **player** or as a **spectator**.
+- Each turn, one player is the judge:
+  1. **Theme:** the judge chooses a theme.
+  2. **Writing:** everyone else writes against the clock.
+  3. **Judging:** the judge picks a winner, declares a tie, or calls a lie.
+  4. **Reveal:** results are shown, then the judge role moves on.
+- Host options include anonymous submissions and a word filter.
+- Hosts can remove players or skip the current judge.
+- Refresh the page and the app rejoins you to your game.
+- After the final match, players see a results screen with a link to buy the physical game.
 
-### `npm run build`
+## Tech stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- React 19 + TypeScript, bootstrapped with Create React App
+- [Supabase](https://supabase.com) for online rooms, with realtime subscriptions
+- Word and theme lists published from Google Sheets as CSV and cached in `localStorage`
+- Hosted on Vercel
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Getting started
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Prerequisites:** Node.js (LTS) and npm.
 
-### `npm run eject`
+```bash
+git clone https://github.com/acrosticism-the-game/AcrOnline.Acrosticism.com.git
+cd AcrOnline.Acrosticism.com
+npm install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Create a `.env.local` file in the project root:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+REACT_APP_SUPABASE_URL=your-supabase-project-url
+REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Then start the dev server:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```bash
+npm start
+```
 
-## Learn More
+The app runs at http://localhost:3000. Pass-and-play works without Supabase; online rooms need a Supabase project with the game's tables and functions set up. The database schema is not included in this repository.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Never commit `.env.local`. Only the public anon key belongs in this app.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm start` | Dev server with hot reload |
+| `npm test` | Test runner (watch mode) |
+| `npm run build` | Production build into `build/` |
+
+## Progressive Web App
+
+Acrosticism Online is built as a PWA so players can add it to their home screen and play like an app.
+
+**Offline play is not supported yet.** The app needs a connection to load and to play online rooms. The word and theme lists are cached after the first load, which is a first step toward offline pass-and-play.
+
+## Deployment
+
+Deployed on Vercel. Set `REACT_APP_SUPABASE_URL` and `REACT_APP_SUPABASE_ANON_KEY` in the Vercel project's environment variables.
+
+## Project structure
+
+```
+public/   static assets and web app manifest
+src/      application source (screens, room logic, Supabase client)
+```
+
+## License
+
+Copyright © 2026 Acrosticism Studio. All rights reserved.
+
+This repository is public so people can see how Acrosticism Online is built,
+but the code, game content, name, and artwork are not licensed for copying,
+modification, redistribution, or commercial use without written permission.
+
+Outside pull requests are not accepted.
