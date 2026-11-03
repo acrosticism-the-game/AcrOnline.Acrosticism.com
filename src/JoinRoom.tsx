@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Header from "./Header";
 import { supabase } from "./supabaseClient";
 import { joinRoom } from "./roomUtils";
+import { peekSpectatorCount, SPECTATOR_CAP } from "./presence";
 import { Role } from "./session";
 
 type JoinRoomProps = {
@@ -46,6 +47,12 @@ export default function JoinRoom({ onRoomJoined, onBack, initialCode }: JoinRoom
           .neq("status", "closed")
           .maybeSingle();
         if (!room) throw new Error("Room not found. Check the code and try again.");
+
+        const watching = await peekSpectatorCount(room.id);
+        if (watching >= SPECTATOR_CAP) {
+          throw new Error("This room has reached its spectator limit. Please try again in a moment.");
+        }
+
         onRoomJoined(room.id, room.room_code, "", "", "spectator", "");
       } else {
         const { room, player, playerToken } = await joinRoom(roomCode.trim(), playerName.trim());
