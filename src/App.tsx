@@ -18,6 +18,7 @@ import { saveSession, loadSession, clearSession, Role } from "./session";
 import { useSpectatorCount } from "./presence";
 import SpectatorWriting from "./SpectatorWriting";
 import SpectatorJudging from "./SpectatorJudging";
+import DailyChallenge from "./DailyChallenge";
 
 // Google Sheets CSV URLs
 const WORDS_CSV =
@@ -69,7 +70,7 @@ export default function AcrOnline() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Online mode state
-  const [mode, setMode] = useState<"trueHome" | "local" | "onlineLanding" | "onlineCreate" | "onlineJoin" | "onlineLobby" | "onlineRound">("trueHome");
+  const [mode, setMode] = useState<"trueHome" | "local" | "daily" | "onlineLanding" | "onlineCreate" | "onlineJoin" | "onlineLobby" | "onlineRound">("trueHome");
   const [onlineRoomId, setOnlineRoomId] = useState("");
   const [onlineRoomCode, setOnlineRoomCode] = useState("");
   const [onlinePlayerId, setOnlinePlayerId] = useState("");
@@ -866,7 +867,14 @@ export default function AcrOnline() {
         <TrueHome
           onSelectPassAndPlay={() => setMode("local")}
           onSelectOnline={() => setMode("onlineLanding")}
+          onSelectDaily={() => setMode("daily")}
         />
+      );
+    }
+
+    if (mode === "daily") {
+      return (
+        <DailyChallenge onBack={() => setMode("trueHome")} />
       );
     }
 

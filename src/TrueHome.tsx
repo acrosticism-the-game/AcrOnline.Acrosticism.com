@@ -4,6 +4,7 @@ import Header from "./Header";
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
   onSelectOnline: () => void;
+  onSelectDaily: () => void;
 };
 
 const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
@@ -40,7 +41,7 @@ const headingStyle: React.CSSProperties = {
   marginBottom: "40px",
 };
 
-export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHomeProps) {
+export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelectDaily }: TrueHomeProps) {
   const [choosingMode, setChoosingMode] = useState(false);
 
   return (
@@ -60,21 +61,21 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
 
       {choosingMode ? (
         <>
-          <h1 style={headingStyle}>How Do You Want To Play?</h1>
+          <h1 style={headingStyle}>Choose your play mode.</h1>
 
           <button
             onClick={onSelectOnline}
             style={{ ...buttonStyle, background: pinkToBlue }}
           >
-            Play Together Online
-            <span style={subtitleStyle}>Everyone on their own phone</span>
+            Online Mode
+            <span style={subtitleStyle}>Everyone on their own device</span>
           </button>
 
           <button
             onClick={onSelectPassAndPlay}
             style={{ ...buttonStyle, background: blueToPink }}
           >
-            Pass and Play
+            Practice Mode
             <span style={subtitleStyle}>One device, passed around</span>
           </button>
 
@@ -90,11 +91,21 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
           <h1 style={headingStyle}>Ready to Acrosticize?</h1>
 
           <button
+            onClick={onSelectDaily}
+            style={{ ...buttonStyle, background: blueToPink }}
+          >
+            Acrosticize THIS!
+            <span style={subtitleStyle}>Weekly Theme. Daily Word. Share The Chaos.</span>
+          </button>
+
+          <button
             onClick={() => setChoosingMode(true)}
             style={{ ...buttonStyle, background: pinkToBlue }}
           >
             Play Now
+            <span style={subtitleStyle}>Practice Mode or Online Mode</span>
           </button>
+
 
           <a
             href="https://www.acrosticism.com/the-game/how-to-play"
@@ -103,6 +114,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
             style={{ ...buttonStyle, background: blueToPink }}
           >
             How to Play
+            <span style={subtitleStyle}>Learn the rules</span>
           </a>
 
           <a
@@ -112,6 +124,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline }: TrueHo
             style={{ ...buttonStyle, background: pinkToBlue }}
           >
             Acrosticism.com
+            <span style={subtitleStyle}>Visit the official website</span>
           </a>
         </>
       )}
