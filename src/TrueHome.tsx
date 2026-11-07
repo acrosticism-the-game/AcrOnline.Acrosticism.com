@@ -76,7 +76,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
             style={{ ...buttonStyle, background: blueToPink }}
           >
             Practice Mode
-            <span style={subtitleStyle}>One device, passed around</span>
+            <span style={subtitleStyle}>Everyone on this device</span>
           </button>
 
           <button
@@ -103,7 +103,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
             style={{ ...buttonStyle, background: pinkToBlue }}
           >
             Play Now
-            <span style={subtitleStyle}>Practice Mode or Online Mode</span>
+            <span style={subtitleStyle}>Online or Practice Modes</span>
           </button>
 
 
