@@ -23,7 +23,7 @@ Each player gets a word and writes a backronym for it: one line per letter, with
 - A finished backronym can be shared as an image card, or copied as text, with a link back to the game.
 - A day streak counts consecutive days played. It is kept on the device.
 
-**Pass and play** (one device, 2 to 6 players)
+**Pass and play** (one device, 1 to 6 players)
 - Enter player names and choose a random theme or write your own.
 - Players take turns on the same device, with a 2-minute timer each.
 - Everyone's backronyms are revealed together at the end of the round.
