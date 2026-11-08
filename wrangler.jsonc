@@ -1,0 +1,7 @@
+{
+  "name": "acronline",
+  "compatibility_date": "2026-11-07",
+  "assets": {
+    "directory": "./build"
+  }
+}
