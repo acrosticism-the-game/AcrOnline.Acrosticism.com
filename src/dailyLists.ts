@@ -69,7 +69,7 @@ const capitalizeFirst = (entry: string) => entry.charAt(0).toUpperCase() + entry
 // copy saved on this device. Returns an empty list only if both fail.
 export const loadDailyList = async (url: string, cacheKey: string): Promise<string[]> => {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Bad response");
     const list = parseFirstColumn(await response.text()).map(capitalizeFirst);
     if (list.length === 0) throw new Error("Empty list");

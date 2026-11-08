@@ -180,6 +180,21 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     } catch { }
   }, [record, storageKey]);
 
+  // If the app was left open past midnight Eastern, reload so it shows the new day
+  useEffect(() => {
+    const checkForNewDay = () => {
+      if (document.visibilityState !== "visible") return;
+      if (record && !record.submitted) return;
+      if (getDailyDateString() !== today) window.location.reload();
+    };
+    document.addEventListener("visibilitychange", checkForNewDay);
+    window.addEventListener("focus", checkForNewDay);
+    return () => {
+      document.removeEventListener("visibilitychange", checkForNewDay);
+      window.removeEventListener("focus", checkForNewDay);
+    };
+  }, [today, record]);
+
   // Tick the clock while the player is writing
   const writing = !!record && !record.submitted;
   useEffect(() => {

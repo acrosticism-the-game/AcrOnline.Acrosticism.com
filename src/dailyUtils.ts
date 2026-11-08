@@ -3,7 +3,7 @@
 // so every player sees the same challenge without any database.
 
 // Day No. 1 of the challenge. Use a Monday so the weekly theme changes on Mondays.
-export const DAILY_LAUNCH_DATE = "2026-11-09";
+export const DAILY_LAUNCH_DATE = "2026-11-08";
 
 // "Today" is always judged in Eastern time so every player sees the same challenge.
 const DAILY_TIME_ZONE = "America/New_York";
