@@ -95,7 +95,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
             style={{ ...buttonStyle, background: blueToPink }}
           >
             Acrosticize THIS!
-            <span style={subtitleStyle}>Weekly Theme. Daily Word. Share The Chaos.</span>
+            <span style={subtitleStyle}>Daily Word. Weekly Theme. Share The Chaos.</span>
           </button>
 
           <button

@@ -2,7 +2,7 @@
 // Everything here is deterministic: the same date always gives the same word and theme,
 // so every player sees the same challenge without any database.
 
-// Day No. 1 of the challenge. Use a Monday so the weekly theme changes on Mondays.
+// Day No. 1 of the challenge. Use a Sunday so the weekly theme changes on Sundays.
 export const DAILY_LAUNCH_DATE = "2026-11-08";
 
 // "Today" is always judged in Eastern time so every player sees the same challenge.
