@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Header from "./Header";
+import HowToPlayModal from "./HowToPlayModal";
 
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
@@ -43,6 +44,7 @@ const headingStyle: React.CSSProperties = {
 
 export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelectDaily }: TrueHomeProps) {
   const [choosingMode, setChoosingMode] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   return (
     <div
@@ -58,6 +60,8 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
       }}
     >
       <Header />
+
+      {showRules && <HowToPlayModal onClose={() => setShowRules(false)} />}
 
       {choosingMode ? (
         <>
@@ -107,15 +111,13 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
           </button>
 
 
-          <a
-            href="https://www.acrosticism.com/the-game/how-to-play"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setShowRules(true)}
             style={{ ...buttonStyle, background: blueToPink }}
           >
             How to Play
             <span style={subtitleStyle}>Learn the rules</span>
-          </a>
+          </button>
 
           <a
             href="https://www.acrosticism.com"
