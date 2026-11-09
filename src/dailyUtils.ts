@@ -10,6 +10,9 @@ const DAILY_TIME_ZONE = "America/New_York";
 
 export const DAILY_SHARE_URL = "https://play.acrosticism.com";
 
+// Tags the business page when the platform supports mentions.
+export const SHARE_HANDLE = "@acrosticismgame";
+
 // Hashtags added to every shared post.
 export const DAILY_HASHTAGS = "#AcrosticizeTHIS #ShareTheChaos #AcrosticismGame #WordsAreHard";
 
@@ -117,6 +120,6 @@ export const buildShareText = (args: {
     body,
     "",
     `Play today's challenge: ${DAILY_SHARE_URL}`,
-    DAILY_HASHTAGS,
+    `${SHARE_HANDLE} ${DAILY_HASHTAGS}`,
   ].join("\n");
 };

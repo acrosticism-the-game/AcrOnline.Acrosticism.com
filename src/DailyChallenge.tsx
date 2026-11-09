@@ -325,6 +325,29 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     downloadBlob(cardBlob, fileName);
     setImageStatus("Image saved. Attach it to your post!");
   };
+  
+  // Shares the image and the full words together. If this device cannot share a file,
+  // the image is saved and the words are copied so they can be pasted with it.
+  const shareImageAndWords = async () => {
+    if (!cardBlob) return;
+    const fileName = cardFileName(number);
+    if (canShareImage) {
+      try {
+        const file = new File([cardBlob], fileName, { type: "image/png" });
+        await navigator.share({ files: [file], text: shareText });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    downloadBlob(cardBlob, fileName);
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setImageStatus("Image saved and words copied. Attach the image and paste the words into your post!");
+    } catch {
+      setImageStatus("Image saved. Use the Copy button below to get the words.");
+    }
+  };
 
   // Screen 1: ready
   if (!record) {

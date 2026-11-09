@@ -34,7 +34,7 @@ const steps: { title: string; body: string }[] = [
     body: "The randomly selected judge reveals a Theme Card, like \"travel agency tagline\".",
   },
   {
-    title: "Everyone gets a word",
+    title: "Everyone else gets a Word Card",
     body: "You receive a random Word Card, like \"JIG\".",
   },
   {

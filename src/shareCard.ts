@@ -1,4 +1,4 @@
-import { DAILY_HASHTAGS, DAILY_SHARE_URL } from "./dailyUtils";
+import { DAILY_HASHTAGS, DAILY_SHARE_URL, SHARE_HANDLE } from "./dailyUtils";
 
 // Builds the shareable image for a finished daily challenge: your background image
 // with the challenge number, word, theme and the player's backronym drawn on top.
@@ -413,8 +413,10 @@ export const renderShareCard = async (input: ShareCardInput): Promise<Blob> => {
 export const cardFileName = (number: number) => `acrosticize-this-${number}.png`;
 
 // The short caption that goes with the image when it is shared.
+
+
 export const buildShareCaption = (number: number) =>
-  `Acrosticize THIS! No. ${number}\nPlay today's challenge: ${DAILY_SHARE_URL}\n${DAILY_HASHTAGS}`;
+  `Acrosticize THIS! No. ${number}\nPlay today's challenge: ${DAILY_SHARE_URL}\n${SHARE_HANDLE} ${DAILY_HASHTAGS}`;
 
 // True on phones and browsers that can share an image file straight to other apps.
 export const canShareImageFiles = (): boolean => {
