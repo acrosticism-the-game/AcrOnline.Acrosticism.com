@@ -10,6 +10,7 @@ import {
 } from "./dailyLists";
 import { containsProfanity } from "./profanity";
 import {
+  DAILY_SHARE_URL,
   buildShareText,
   getDailyDateString,
   getDailyNumber,
@@ -76,6 +77,13 @@ const bigButtonStyle: React.CSSProperties = {
   fontFamily: "Nunito, sans-serif",
 };
 
+const subtitleStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.85rem",
+  fontWeight: "normal",
+  marginTop: "4px",
+};
+
 const themeBannerStyle: React.CSSProperties = {
   marginBottom: "20px",
   fontSize: "1.2rem",
@@ -130,6 +138,15 @@ const formatDateLabel = (dateString: string) => {
   });
 };
 
+// True when the app is shown inside another page, such as the Google Site embed.
+const isEmbedded = (): boolean => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
 export default function DailyChallenge({ onBack }: DailyChallengeProps) {
   const [today] = useState(() => getDailyDateString());
   const storageKey = `${STORAGE_PREFIX}${today}`;
@@ -164,6 +181,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
   const [cardFailed, setCardFailed] = useState(false);
   const [imageStatus, setImageStatus] = useState("");
   const [canShareImage] = useState(() => canShareImageFiles());
+  const [embedded] = useState(() => isEmbedded());
 
   // Day streak, kept on this device. Reopening a challenge already finished today counts it too.
   const [streak, setStreak] = useState(() =>
@@ -552,6 +570,18 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         <p style={{ fontSize: "0.95rem", marginBottom: "16px" }}>
           A line was left out by the word filter.
         </p>
+      )}
+
+      {embedded && (
+        <a
+          href={DAILY_SHARE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...bigButtonStyle, background: pinkToBlue, textDecoration: "none" }}
+        >
+          Save? No. Share? Yes.
+          <span style={subtitleStyle}>Share the Chaos on the full site</span>
+        </a>
       )}
 
       <button onClick={copyShare} style={{ ...bigButtonStyle, background: blueToPink }}>
