@@ -76,6 +76,13 @@ const bigButtonStyle: React.CSSProperties = {
   fontFamily: "Nunito, sans-serif",
 };
 
+const subtitleStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.85rem",
+  fontWeight: "normal",
+  marginTop: "4px",
+};
+
 const themeBannerStyle: React.CSSProperties = {
   marginBottom: "20px",
   fontSize: "1.2rem",
@@ -159,6 +166,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     };
   }, []);
   const [copyStatus, setCopyStatus] = useState("");
+  const [showTextBox, setShowTextBox] = useState(false);
   const [cardBlob, setCardBlob] = useState<Blob | null>(null);
   const [cardUrl, setCardUrl] = useState("");
   const [cardFailed, setCardFailed] = useState(false);
@@ -303,8 +311,8 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
       await navigator.clipboard.writeText(shareText);
       setCopyStatus("Copied! Now paste it anywhere you like.");
     } catch {
-      shareBoxRef.current?.select();
-      setCopyStatus("Could not copy automatically. The text is selected, so copy it by hand.");
+      setShowTextBox(true);
+      setCopyStatus("Could not copy automatically. Select the text below and copy it manually.");
     }
   };
 
@@ -325,7 +333,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     downloadBlob(cardBlob, fileName);
     setImageStatus("Image saved. Attach it to your post!");
   };
-  
+
   // Shares the image and the full words together. If this device cannot share a file,
   // the image is saved and the words are copied so they can be pasted with it.
   const shareImageAndWords = async () => {
@@ -493,7 +501,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     );
   }
 
-  // Screen 3: done and share
+    // Screen 3: done and share
   return (
     <div style={pageStyle}>
       <Header />
@@ -531,6 +539,44 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         </p>
       )}
 
+      <button onClick={copyShare} style={{ ...bigButtonStyle, background: blueToPink }}>
+        Copy Your Backronym
+        <span style={subtitleStyle}>Text Only</span>
+      </button>
+
+      {copyStatus && <p style={{ marginBottom: "16px" }}>{copyStatus}</p>}
+
+      {(cardFailed || showTextBox) && (
+        <textarea
+          ref={shareBoxRef}
+          readOnly
+          value={shareText}
+          rows={shareText.split("\n").length + 1}
+          style={{
+            display: "block",
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px",
+            marginBottom: "16px",
+            fontSize: "1rem",
+            fontFamily: "Nunito, sans-serif",
+            textAlign: "left",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            resize: "none",
+            color: "#000000",
+            background: "#ffffff",
+            textShadow: "none",
+          }}
+        />
+      )}
+
+      {record.filtered && (
+        <p style={{ fontSize: "0.95rem", marginBottom: "16px" }}>
+          A line was left out by the word filter.
+        </p>
+      )}
+
       {!cardFailed && (
         <button
           onClick={shareImage}
@@ -543,45 +589,27 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
           }}
         >
           {canShareImage ? "Share Your Backronym" : "Save Image"}
+          <span style={subtitleStyle}>Image and Tags</span>
+        </button>
+      )}
+
+      {!cardFailed && (
+        <button
+          onClick={shareImageAndWords}
+          disabled={!cardBlob}
+          style={{
+            ...bigButtonStyle,
+            background: blueToPink,
+            opacity: cardBlob ? 1 : 0.5,
+            cursor: cardBlob ? "pointer" : "not-allowed",
+          }}
+        >
+          {canShareImage ? "Share Everything" : "Save Image + Copy Words"}
+          <span style={subtitleStyle}>Image, Text and Tags</span>
         </button>
       )}
 
       {imageStatus && <p style={{ marginBottom: "16px" }}>{imageStatus}</p>}
-
-      <textarea
-        ref={shareBoxRef}
-        readOnly
-        value={shareText}
-        rows={shareText.split("\n").length + 1}
-        style={{
-          display: "block",
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "12px",
-          marginBottom: "16px",
-          fontSize: "1rem",
-          fontFamily: "Nunito, sans-serif",
-          textAlign: "left",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-          resize: "none",
-          color: "#000000",
-          background: "#ffffff",
-          textShadow: "none",
-        }}
-      />
-
-      {record.filtered && (
-        <p style={{ fontSize: "0.95rem", marginBottom: "16px" }}>
-          A line was left out by the word filter.
-        </p>
-      )}
-
-      <button onClick={copyShare} style={{ ...bigButtonStyle, background: blueToPink }}>
-        Copy Your Backronym
-      </button>
-
-      {copyStatus && <p style={{ marginBottom: "16px" }}>{copyStatus}</p>}
 
       <button onClick={onBack} style={{ ...bigButtonStyle, background: pinkToBlue }}>
         Back to Home
