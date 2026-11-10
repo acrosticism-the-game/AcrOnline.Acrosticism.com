@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "./Header";
 import HowToPlayModal from "./HowToPlayModal";
+import { DAILY_SHARE_URL } from "./dailyUtils";
 
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
@@ -42,9 +43,19 @@ const headingStyle: React.CSSProperties = {
   marginBottom: "40px",
 };
 
+// True when the app is shown inside another page, such as the Google Site embed.
+const isEmbedded = (): boolean => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
 export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelectDaily }: TrueHomeProps) {
   const [choosingMode, setChoosingMode] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [embedded] = useState(() => isEmbedded());
 
   return (
     <div
@@ -94,13 +105,25 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
         <>
           <h1 style={headingStyle}>Ready to Acrosticize?</h1>
 
-          <button
-            onClick={onSelectDaily}
-            style={{ ...buttonStyle, background: blueToPink }}
-          >
-            Acrosticize THIS!
-            <span style={subtitleStyle}>Daily Word. Weekly Theme. Share The Chaos.</span>
-          </button>
+          {embedded ? (
+            <a
+              href={`${DAILY_SHARE_URL}/?daily=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ ...buttonStyle, background: blueToPink }}
+            >
+              Acrosticize THIS!
+              <span style={subtitleStyle}>Play and share in the full game (opens a new tab)</span>
+            </a>
+          ) : (
+            <button
+              onClick={onSelectDaily}
+              style={{ ...buttonStyle, background: blueToPink }}
+            >
+              Acrosticize THIS!
+              <span style={subtitleStyle}>Daily Word. Weekly Theme. Share The Chaos.</span>
+            </button>
+          )}
 
           <button
             onClick={() => setChoosingMode(true)}

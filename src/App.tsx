@@ -210,6 +210,12 @@ export default function AcrOnline() {
   useEffect(() => {
     const restore = async () => {
       try {
+        // A link ending in ?daily=1 opens straight into the daily challenge
+        if (new URLSearchParams(window.location.search).get("daily") === "1") {
+          setMode("daily");
+          return;
+        }
+
         const saved = loadSession();
         if (!saved) {
           const codeFromUrl = new URLSearchParams(window.location.search).get("room");
