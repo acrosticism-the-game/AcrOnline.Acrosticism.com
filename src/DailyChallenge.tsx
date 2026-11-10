@@ -10,7 +10,6 @@ import {
 } from "./dailyLists";
 import { containsProfanity } from "./profanity";
 import {
-  DAILY_SHARE_URL,
   buildShareText,
   getDailyDateString,
   getDailyNumber,
@@ -138,15 +137,6 @@ const formatDateLabel = (dateString: string) => {
   });
 };
 
-// True when the app is shown inside another page, such as the Google Site embed.
-const isEmbedded = (): boolean => {
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-};
-
 export default function DailyChallenge({ onBack }: DailyChallengeProps) {
   const [today] = useState(() => getDailyDateString());
   const storageKey = `${STORAGE_PREFIX}${today}`;
@@ -182,7 +172,6 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
   const [cardFailed, setCardFailed] = useState(false);
   const [imageStatus, setImageStatus] = useState("");
   const [canShareImage] = useState(() => canShareImageFiles());
-  const [embedded] = useState(() => isEmbedded());
 
   // Day streak, kept on this device. Reopening a challenge already finished today counts it too.
   const [streak, setStreak] = useState(() =>
@@ -548,18 +537,6 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         <p style={{ marginBottom: "16px" }}>
           The share image could not be made, but you can still copy the text below.
         </p>
-      )}
-
-      {embedded && (
-        <a
-          href={DAILY_SHARE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ ...bigButtonStyle, background: pinkToBlue, textDecoration: "none" }}
-        >
-          Save? No. Share? Yes.
-          <span style={subtitleStyle}>Share the Chaos on the full site</span>
-        </a>
       )}
 
       <button onClick={copyShare} style={{ ...bigButtonStyle, background: blueToPink }}>
