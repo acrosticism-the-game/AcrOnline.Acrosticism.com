@@ -10,6 +10,15 @@ const DAILY_TIME_ZONE = "America/New_York";
 
 export const DAILY_SHARE_URL = "https://play.acrosticism.com";
 
+// True when the app is shown inside another page, such as the Google Site embed.
+export const isEmbedded = (): boolean => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+};
+
 // Tags the business page when the platform supports mentions.
 export const SHARE_HANDLE = "@acrosticismgame";
 

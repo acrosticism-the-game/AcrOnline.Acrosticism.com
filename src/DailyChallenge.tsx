@@ -11,13 +11,13 @@ import {
 import { containsProfanity } from "./profanity";
 import {
   buildShareText,
+  isEmbedded,
   getDailyDateString,
   getDailyNumber,
   getDailyTheme,
   getDailyWord,
 } from "./dailyUtils";
 import {
-  buildShareCaption,
   canShareImageFiles,
   cardFileName,
   downloadBlob,
@@ -172,6 +172,8 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
   const [cardFailed, setCardFailed] = useState(false);
   const [imageStatus, setImageStatus] = useState("");
   const [canShareImage] = useState(() => canShareImageFiles());
+  // Same tab on the full site, new tab when shown inside an embed
+  const linkTarget = isEmbedded() ? "_blank" : "_top";
 
   // Day streak, kept on this device. Reopening a challenge already finished today counts it too.
   const [streak, setStreak] = useState(() =>
@@ -316,24 +318,6 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     }
   };
 
-  // On phones this opens the share sheet with the image. Elsewhere it saves the image.
-  const shareImage = async () => {
-    if (!cardBlob) return;
-    const fileName = cardFileName(number);
-    if (canShareImage) {
-      try {
-        const file = new File([cardBlob], fileName, { type: "image/png" });
-        await navigator.share({ files: [file], text: buildShareCaption(number) });
-        return;
-      } catch (error) {
-        // The player closed the share sheet, so there is nothing more to do
-        if ((error instanceof DOMException) && (error.name === "AbortError")) return;
-      }
-    }
-    downloadBlob(cardBlob, fileName);
-    setImageStatus("Image saved. Attach it to your post!");
-  };
-
   // Shares the image and the full words together. If this device cannot share a file,
   // the image is saved and the words are copied so they can be pasted with it.
   const shareImageAndWords = async () => {
@@ -353,7 +337,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
       await navigator.clipboard.writeText(shareText);
       setImageStatus("Image saved and words copied. Attach the image and paste the words into your post!");
     } catch {
-      setImageStatus("Image saved. Use the Copy button below to get the words.");
+      setImageStatus("Image saved. Use the Copy button above to get the words.");
     }
   };
 
@@ -501,10 +485,10 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
     );
   }
 
-    // Screen 3: done and share
+     // Screen 3: done and share
   return (
     <div style={pageStyle}>
-      <Header />
+      <Header compact />
       <h1 style={headingStyle}>Nice work!</h1>
       <p style={{ fontSize: "1.1rem", marginBottom: "20px" }}>
         Share your backronym with your friends. Come back tomorrow for a new challenge.
@@ -517,31 +501,19 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         </p>
       )}
 
-      {cardUrl ? (
-        <img
-          src={cardUrl}
-          alt={`Your Acrosticize THIS! backronym for challenge No. ${number}`}
-          style={{
-            display: "block",
-            width: "100%",
-            height: "auto",
-            borderRadius: "12px",
-            marginBottom: "16px",
-          }}
-        />
-      ) : (
-        !cardFailed && <p style={{ marginBottom: "16px" }}>Making your share image...</p>
-      )}
-
-      {cardFailed && (
-        <p style={{ marginBottom: "16px" }}>
-          The share image could not be made, but you can still copy the text below.
-        </p>
-      )}
-
-      <button onClick={copyShare} style={{ ...bigButtonStyle, background: blueToPink }}>
-        Copy Your Backronym
-        <span style={subtitleStyle}>Text Only</span>
+      <button
+        onClick={copyShare}
+        style={{
+          ...bigButtonStyle,
+          background: blueToPink,
+          width: "60%",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "10px",
+          fontSize: "0.95rem",
+        }}
+      >
+        Copy Text
       </button>
 
       {copyStatus && <p style={{ marginBottom: "16px" }}>{copyStatus}</p>}
@@ -571,47 +543,92 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         />
       )}
 
-      {record.filtered && (
-        <p style={{ fontSize: "0.95rem", marginBottom: "16px" }}>
-          A line was left out by the word filter.
-        </p>
-      )}
-
-      {!cardFailed && (
-        <button
-          onClick={shareImage}
-          disabled={!cardBlob}
-          style={{
-            ...bigButtonStyle,
-            background: pinkToBlue,
-            opacity: cardBlob ? 1 : 0.5,
-            cursor: cardBlob ? "pointer" : "not-allowed",
-          }}
-        >
-          {canShareImage ? "Share Your Backronym" : "Save Image"}
-          <span style={subtitleStyle}>Image and Tags</span>
-        </button>
-      )}
-
       {!cardFailed && (
         <button
           onClick={shareImageAndWords}
           disabled={!cardBlob}
           style={{
             ...bigButtonStyle,
-            background: blueToPink,
+            background: pinkToBlue,
+            boxShadow: "0 0 0 3px #fff2cc, 0 0 24px rgba(122, 252, 255, 0.8)",
             opacity: cardBlob ? 1 : 0.5,
             cursor: cardBlob ? "pointer" : "not-allowed",
           }}
         >
-          {canShareImage ? "Share Everything" : "Save Image + Copy Words"}
+          {canShareImage ? "Share Your Backronym" : "Save Image + Copy Text"}
           <span style={subtitleStyle}>Image, Text and Tags</span>
         </button>
       )}
 
       {imageStatus && <p style={{ marginBottom: "16px" }}>{imageStatus}</p>}
 
-      <button onClick={onBack} style={{ ...bigButtonStyle, background: pinkToBlue }}>
+      {cardUrl ? (
+        <img
+          src={cardUrl}
+          alt={`Your Acrosticize THIS! backronym for challenge No. ${number}`}
+          style={{
+            display: "block",
+            width: "100%",
+            height: "auto",
+            borderRadius: "12px",
+            marginBottom: "16px",
+          }}
+        />
+      ) : (
+        !cardFailed && <p style={{ marginBottom: "16px" }}>Making your share image...</p>
+      )}
+
+      {cardFailed && (
+        <p style={{ marginBottom: "16px" }}>
+          The share image could not be made, but you can still copy the text above.
+        </p>
+      )}
+
+      {record.filtered && (
+        <p style={{ fontSize: "0.95rem", marginBottom: "16px" }}>
+          A line was left out by the word filter.
+        </p>
+      )}
+
+      <a
+        href="https://shop.acrosticism.com"
+        target={linkTarget}
+        rel="noopener noreferrer"
+        style={{ ...bigButtonStyle, background: blueToPink, textDecoration: "none" }}
+      >
+        Buy The Game
+      </a>
+
+      <a
+        href="https://www.acrosticism.com"
+        target={linkTarget}
+        rel="noopener noreferrer"
+        style={{
+          ...bigButtonStyle,
+          background: pinkToBlue,
+          textDecoration: "none",
+          width: "60%",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "10px",
+          fontSize: "0.95rem",
+        }}
+      >
+        acrosticism.com
+      </a>
+
+      <button
+        onClick={onBack}
+        style={{
+          ...bigButtonStyle,
+          background: blueToPink,
+          width: "60%",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "10px",
+          fontSize: "0.95rem",
+        }}
+      >
         Back to Home
       </button>
     </div>
