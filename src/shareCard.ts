@@ -359,7 +359,7 @@ export const drawShareCard = (
     );
     ctx.textAlign = "left";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 12;
     CTA_LINES.forEach((line, i) => {
       const x = CARD_WIDTH * 0.06;
       const y = CARD_HEIGHT * (0.82 + i * 0.045);
