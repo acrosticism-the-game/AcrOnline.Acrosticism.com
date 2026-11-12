@@ -48,7 +48,7 @@ const SHOW_URL = true;
 
 // A short invitation in the bottom left, above the web address (set to false to hide it).
 const SHOW_CTA = true;
-const CTA_LINES = ["Think you’ve got what it takes?", "Acrosticize THIS at"];
+const CTA_LINES = ["Think you’ve got what it takes?", " ", "Acrosticize THIS at"];
 
 const fontString = (weight: number, size: number) =>
   `${weight} ${Math.round(size)}px "${CARD_FONT}", "Nunito", sans-serif`;
@@ -355,14 +355,14 @@ export const drawShareCard = (
   if (SHOW_CTA) {
     const ctaWidth = CARD_WIDTH * 0.62;
     const ctaSize = Math.min(
-      ...CTA_LINES.map((line) => fitSize(ctx, line, FONT_BOLD, 42, ctaWidth))
+      ...CTA_LINES.map((line) => fitSize(ctx, line, FONT_BOLD, 50, ctaWidth))
     );
     ctx.textAlign = "left";
     ctx.lineJoin = "round";
     ctx.lineWidth = 8;
     CTA_LINES.forEach((line, i) => {
       const x = CARD_WIDTH * 0.06;
-      const y = CARD_HEIGHT * (0.865 + i * 0.045);
+      const y = CARD_HEIGHT * (0.82 + i * 0.045);
       ctx.font = fontString(FONT_BOLD, ctaSize);
       ctx.strokeStyle = "#ffffff";
       ctx.strokeText(line, x, y);
