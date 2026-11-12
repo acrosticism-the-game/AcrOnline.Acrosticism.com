@@ -25,7 +25,7 @@ const TEXT_AREA = { x: 0.1, y: 0.17, w: 0.8, h: 0.57 };
 const PANEL_PADDING = 40;
 const PANEL_RADIUS = 44;
 // How solid the panel is: 1 is fully white, lower lets more of the artwork show through.
-const PANEL_OPACITY = 0.8;
+const PANEL_OPACITY = 0.85;
 // Outline around the panel. Set the width to 0 for no outline.
 const PANEL_BORDER_WIDTH = 3;
 const PANEL_BORDER_COLOR = "rgba(27, 31, 75, 0.5)";
@@ -45,6 +45,10 @@ const BLUE = "#1155cc";
 
 // Small web address in the bottom left corner (set to false to hide it).
 const SHOW_URL = true;
+
+// A short invitation in the bottom left, above the web address (set to false to hide it).
+const SHOW_CTA = true;
+const CTA_LINES = ["Think you’ve got what it takes?", "Acrosticize THIS at"];
 
 const fontString = (weight: number, size: number) =>
   `${weight} ${Math.round(size)}px "${CARD_FONT}", "Nunito", sans-serif`;
@@ -141,7 +145,7 @@ const buildLayout = (
     input.streak && input.streak >= 2
       ? `Daily Challenge No. ${input.number}  ·  ${input.streak} day streak`
       : `Daily Challenge No. ${input.number}`;
-  addCentered(subtitle, FONT_REGULAR, 34 * scale, INK);
+  addCentered(subtitle, FONT_REGULAR, 38 * scale, INK);
   y += 22 * scale;
 
   const spacedWord = input.word.toUpperCase().split("").join(" ");
@@ -329,7 +333,7 @@ export const drawShareCard = (
   drawTextPanel(ctx, area);
 
   // Use the biggest text size that still fits inside the box
-  let scale = 1;
+  let scale = 1.25;
   let layout = buildLayout(ctx, input, area.w, scale);
   while (layout.height > area.h && scale > 0.4) {
     scale -= 0.04;
@@ -348,8 +352,27 @@ export const drawShareCard = (
     ctx.fillText(cmd.text, cmd.center ? centerX : blockLeft + cmd.x, top + cmd.y);
   });
 
+  if (SHOW_CTA) {
+    const ctaWidth = CARD_WIDTH * 0.62;
+    const ctaSize = Math.min(
+      ...CTA_LINES.map((line) => fitSize(ctx, line, FONT_BOLD, 42, ctaWidth))
+    );
+    ctx.textAlign = "left";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 8;
+    CTA_LINES.forEach((line, i) => {
+      const x = CARD_WIDTH * 0.06;
+      const y = CARD_HEIGHT * (0.865 + i * 0.045);
+      ctx.font = fontString(FONT_BOLD, ctaSize);
+      ctx.strokeStyle = "#ffffff";
+      ctx.strokeText(line, x, y);
+      ctx.fillStyle = i === CTA_LINES.length - 1 ? ACCENT : INK;
+      ctx.fillText(line, x, y);
+    });
+  }
+
   if (SHOW_URL) {
-    ctx.font = fontString(FONT_REGULAR, 30);
+    ctx.font = fontString(FONT_REGULAR, 50);
     ctx.textAlign = "left";
     const urlText = DAILY_SHARE_URL.replace(/^https?:\/\//, "");
     ctx.lineJoin = "round";

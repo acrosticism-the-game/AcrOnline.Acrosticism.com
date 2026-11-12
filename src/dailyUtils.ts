@@ -19,6 +19,22 @@ export const isEmbedded = (): boolean => {
   }
 };
 
+// True when the app is installed and running like a standalone app (PWA).
+const isStandalone = (): boolean => {
+  try {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true
+    );
+  } catch {
+    return false;
+  }
+};
+
+// Same tab on the website, new tab inside an embed or the installed app.
+export const getLinkTarget = (): "_top" | "_blank" =>
+  isEmbedded() || isStandalone() ? "_blank" : "_top";
+
 // Tags the business page when the platform supports mentions.
 export const SHARE_HANDLE = "@acrosticismgame";
 
@@ -128,7 +144,8 @@ export const buildShareText = (args: {
     "",
     body,
     "",
-    `Play today's challenge: ${DAILY_SHARE_URL}`,
+    "Think you’ve got what it takes?",
+    `Acrosticize THIS at ${DAILY_SHARE_URL}`,
     `${SHARE_HANDLE} ${DAILY_HASHTAGS}`,
   ].join("\n");
 };
