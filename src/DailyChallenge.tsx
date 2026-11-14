@@ -42,6 +42,7 @@ type DailyChallengeProps = {
 
 const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
 const blueToPink = "linear-gradient(90deg, #7afcff, #ff7ee5)";
+const rainbow = "linear-gradient(90deg, #ff6b6b, #ffa94d, #ffe066, #69db7c, #4dabf7, #b197fc)";
 
 const pageStyle: React.CSSProperties = {
   padding: "20px",
@@ -368,7 +369,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
           disabled={!listsReady}
           style={{
             ...bigButtonStyle,
-            background: pinkToBlue,
+            background: rainbow,
             opacity: listsReady ? 1 : 0.5,
             cursor: listsReady ? "pointer" : "not-allowed",
           }}
@@ -549,7 +550,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
           disabled={!cardBlob}
           style={{
             ...bigButtonStyle,
-            background: pinkToBlue,
+            background: rainbow,
             boxShadow: "0 0 0 3px #fff2cc, 0 0 24px rgba(122, 252, 255, 0.8)",
             opacity: cardBlob ? 1 : 0.5,
             cursor: cardBlob ? "pointer" : "not-allowed",

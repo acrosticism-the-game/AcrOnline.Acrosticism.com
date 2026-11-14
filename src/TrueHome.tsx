@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "./Header";
 import HowToPlayModal from "./HowToPlayModal";
-import { DAILY_SHARE_URL } from "./dailyUtils";
-
+import { DAILY_SHARE_URL, getLinkTarget, isStandalone } from "./dailyUtils";
+import { canPromptInstall, isIosDevice, onInstallChange, promptInstall } from "./installPrompt";
 type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
   onSelectOnline: () => void;
@@ -11,6 +11,7 @@ type TrueHomeProps = {
 
 const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
 const blueToPink = "linear-gradient(90deg, #7afcff, #ff7ee5)";
+const rainbow = "linear-gradient(90deg, #ff6b6b, #ffa94d, #ffe066, #69db7c, #4dabf7, #b197fc)";
 
 const buttonStyle: React.CSSProperties = {
   display: "block",
@@ -56,6 +57,13 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
   const [choosingMode, setChoosingMode] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [embedded] = useState(() => isEmbedded());
+  const [installable, setInstallable] = useState(() => canPromptInstall());
+  const [installDismissed, setInstallDismissed] = useState(false);
+  // The embed's Download The App button opens this page with ?install=1
+  const wantsInstall =
+    new URLSearchParams(window.location.search).get("install") === "1";
+
+  useEffect(() => onInstallChange(() => setInstallable(canPromptInstall())), []);
 
   return (
     <div
@@ -73,6 +81,54 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
       <Header />
 
       {showRules && <HowToPlayModal onClose={() => setShowRules(false)} />}
+
+      {wantsInstall && !embedded && !isStandalone() && !installDismissed && (
+        <div
+          style={{
+            margin: "0 0 24px",
+            padding: "16px",
+            borderRadius: "12px",
+            background: "rgba(0, 0, 0, 0.35)",
+            border: "2px solid #7afcff",
+            textShadow: "none",
+          }}
+        >
+          <strong style={{ fontSize: "1.2rem" }}>Get the Acrosticism app</strong>
+          {installable ? (
+            <button
+              onClick={async () => {
+                const accepted = await promptInstall();
+                if (accepted) setInstallDismissed(true);
+              }}
+              style={{ ...buttonStyle, background: pinkToBlue, marginTop: "12px", marginBottom: "0" }}
+            >
+              Install App
+              <span style={subtitleStyle}>One tap, no app store</span>
+            </button>
+          ) : (
+            <p style={{ margin: "10px 0 0", fontSize: "1rem" }}>
+              {isIosDevice()
+                ? "Tap the Share button in Safari, then choose Add to Home Screen."
+                : "Open your browser menu and choose Install app or Add to Home Screen."}
+            </p>
+          )}
+          <button
+            onClick={() => setInstallDismissed(true)}
+            style={{
+              marginTop: "12px",
+              background: "transparent",
+              border: "none",
+              color: "#fff2cc",
+              textDecoration: "underline",
+              cursor: "pointer",
+              fontFamily: "Nunito, sans-serif",
+              fontSize: "0.9rem",
+            }}
+          >
+            Not now
+          </button>
+        </div>
+      )}
 
       {choosingMode ? (
         <>
@@ -107,18 +163,18 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
 
           {embedded ? (
             <a
-              href={`${DAILY_SHARE_URL}/?daily=1`}
+              href={`${DAILY_SHARE_URL}/?install=1`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ ...buttonStyle, background: blueToPink }}
             >
-              Acrosticize THIS!
-              <span style={subtitleStyle}>Play and share in the full game (opens a new tab)</span>
+              Download The App
+              <span style={subtitleStyle}>Play and share on your phone (opens a new tab)</span>
             </a>
           ) : (
             <button
               onClick={onSelectDaily}
-              style={{ ...buttonStyle, background: blueToPink }}
+              style={{ ...buttonStyle, background: rainbow }}
             >
               Acrosticize THIS!
               <span style={subtitleStyle}>Daily Word. Weekly Theme. Share The Chaos.</span>
@@ -144,7 +200,7 @@ export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelect
 
           <a
             href="https://www.acrosticism.com"
-            target="_blank"
+            target={getLinkTarget()}
             rel="noopener noreferrer"
             style={{ ...buttonStyle, background: pinkToBlue }}
           >

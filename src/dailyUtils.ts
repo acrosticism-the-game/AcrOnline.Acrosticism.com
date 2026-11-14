@@ -20,7 +20,7 @@ export const isEmbedded = (): boolean => {
 };
 
 // True when the app is installed and running like a standalone app (PWA).
-const isStandalone = (): boolean => {
+export const isStandalone = (): boolean => {
   try {
     return (
       window.matchMedia("(display-mode: standalone)").matches ||
