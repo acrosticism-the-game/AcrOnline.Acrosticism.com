@@ -89,6 +89,11 @@ export default function AcrOnline() {
   const [matchNumber, setMatchNumber] = useState(1);
   const [showResultsPage, setShowResultsPage] = useState(false);
   const [restoring, setRestoring] = useState(true);
+  // Set when the daily results screen sends the player to the mode choice
+  const [openModeChoice, setOpenModeChoice] = useState(false);
+  useEffect(() => {
+    if (mode !== "trueHome") setOpenModeChoice(false);
+  }, [mode]);
   const [onlineRole, setOnlineRole] = useState<Role>("player");
   const [hostToken, setHostToken] = useState("");
   const [playerToken, setPlayerToken] = useState("");
@@ -874,13 +879,20 @@ export default function AcrOnline() {
           onSelectPassAndPlay={() => setMode("local")}
           onSelectOnline={() => setMode("onlineLanding")}
           onSelectDaily={() => setMode("daily")}
+          startInModeChoice={openModeChoice}
         />
       );
     }
 
     if (mode === "daily") {
       return (
-        <DailyChallenge onBack={() => setMode("trueHome")} />
+        <DailyChallenge
+          onBack={() => setMode("trueHome")}
+          onPlayMore={() => {
+            setOpenModeChoice(true);
+            setMode("trueHome");
+          }}
+        />
       );
     }
 

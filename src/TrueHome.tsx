@@ -7,6 +7,7 @@ type TrueHomeProps = {
   onSelectPassAndPlay: () => void;
   onSelectOnline: () => void;
   onSelectDaily: () => void;
+  startInModeChoice?: boolean;
 };
 
 const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
@@ -53,8 +54,8 @@ const isEmbedded = (): boolean => {
   }
 };
 
-export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelectDaily }: TrueHomeProps) {
-  const [choosingMode, setChoosingMode] = useState(false);
+export default function TrueHome({ onSelectPassAndPlay, onSelectOnline, onSelectDaily, startInModeChoice = false }: TrueHomeProps) {
+  const [choosingMode, setChoosingMode] = useState(startInModeChoice);
   const [showRules, setShowRules] = useState(false);
   const [embedded] = useState(() => isEmbedded());
   const [installable, setInstallable] = useState(() => canPromptInstall());

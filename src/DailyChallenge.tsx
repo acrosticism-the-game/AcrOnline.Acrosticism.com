@@ -38,6 +38,7 @@ type DailyRecord = {
 
 type DailyChallengeProps = {
   onBack: () => void;
+  onPlayMore: () => void;
 };
 
 const pinkToBlue = "linear-gradient(90deg, #ff7ee5, #7afcff)";
@@ -138,7 +139,7 @@ const formatDateLabel = (dateString: string) => {
   });
 };
 
-export default function DailyChallenge({ onBack }: DailyChallengeProps) {
+export default function DailyChallenge({ onBack, onPlayMore }: DailyChallengeProps) {
   const [today] = useState(() => getDailyDateString());
   const storageKey = `${STORAGE_PREFIX}${today}`;
   const number = getDailyNumber(today);
@@ -502,12 +503,31 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         </p>
       )}
 
+      {!cardFailed && (
+        <button
+          onClick={shareImageAndWords}
+          disabled={!cardBlob}
+          style={{
+            ...bigButtonStyle,
+            background: rainbow,
+            boxShadow: "0 0 0 3px #fff2cc, 0 0 24px rgba(122, 252, 255, 0.8)",
+            opacity: cardBlob ? 1 : 0.5,
+            cursor: cardBlob ? "pointer" : "not-allowed",
+          }}
+        >
+          {canShareImage ? "Share Your Backronym" : "Save Image + Copy Text"}
+          <span style={subtitleStyle}>Image, Text and Tags</span>
+        </button>
+      )}
+
+      {imageStatus && <p style={{ marginBottom: "16px" }}>{imageStatus}</p>}
+
       <button
         onClick={copyShare}
         style={{
           ...bigButtonStyle,
           background: blueToPink,
-          width: "60%",
+          width: "40%",
           marginLeft: "auto",
           marginRight: "auto",
           padding: "10px",
@@ -544,24 +564,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         />
       )}
 
-      {!cardFailed && (
-        <button
-          onClick={shareImageAndWords}
-          disabled={!cardBlob}
-          style={{
-            ...bigButtonStyle,
-            background: rainbow,
-            boxShadow: "0 0 0 3px #fff2cc, 0 0 24px rgba(122, 252, 255, 0.8)",
-            opacity: cardBlob ? 1 : 0.5,
-            cursor: cardBlob ? "pointer" : "not-allowed",
-          }}
-        >
-          {canShareImage ? "Share Your Backronym" : "Save Image + Copy Text"}
-          <span style={subtitleStyle}>Image, Text and Tags</span>
-        </button>
-      )}
 
-      {imageStatus && <p style={{ marginBottom: "16px" }}>{imageStatus}</p>}
 
       {cardUrl ? (
         <img
@@ -591,11 +594,23 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         </p>
       )}
 
+      <button onClick={onPlayMore} style={{ ...bigButtonStyle, background: pinkToBlue }}>
+        Play More
+        <span style={subtitleStyle}>Online or Practice Modes</span>
+      </button>
+
       <a
         href="https://shop.acrosticism.com"
         target={linkTarget}
         rel="noopener noreferrer"
-        style={{ ...bigButtonStyle, background: blueToPink, textDecoration: "none" }}
+        style={{
+          ...bigButtonStyle,
+          background: blueToPink,
+          textDecoration: "none",
+          width: "80%",
+          marginLeft: "auto",
+          marginRight: "auto",
+        }}
       >
         Buy The Game
       </a>
@@ -615,7 +630,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
           fontSize: "0.95rem",
         }}
       >
-        acrosticism.com
+        Acrosticism.com
       </a>
 
       <button
@@ -623,7 +638,7 @@ export default function DailyChallenge({ onBack }: DailyChallengeProps) {
         style={{
           ...bigButtonStyle,
           background: blueToPink,
-          width: "60%",
+          width: "40%",
           marginLeft: "auto",
           marginRight: "auto",
           padding: "10px",
