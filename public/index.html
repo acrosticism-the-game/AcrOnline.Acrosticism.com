@@ -28,6 +28,16 @@
     -->
       <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <title>Play Acrosticism Online</title>
+      <style>
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: url("%PUBLIC_URL%/stars.png") 0 0 / 100vw repeat;
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

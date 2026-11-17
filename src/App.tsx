@@ -44,7 +44,7 @@ const TIMER_SECONDS = 120;
 export default function AcrOnline() {
   // App background
   useEffect(() => {
-    document.body.style.background = '#B33A6B url("/stars.png") 0 0 / auto repeat';
+    document.body.style.background = "#B33A6B";
   }, []);
 
   // Core state
